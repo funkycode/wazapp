@@ -33,7 +33,7 @@ from PySide import QtCore
 if __name__ == "__main__":
 
 	if os.path.isfile("/home/user/.wazapp/log.txt"):
-		os.remove("/home/user/.wazapp/log.txt")
+		os.rename("/home/user/.wazapp/log.txt","/home/user/.wazapp/previows-log.txt")
 	if not os.path.exists("/home/user/.cache/wazapp/vcards"):
 		os.makedirs("/home/user/.cache/wazapp/vcards")
 
