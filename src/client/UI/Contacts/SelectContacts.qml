@@ -394,8 +394,8 @@ WAPage {
 					}
 				}
 				//console.log("SELECTED CONTACTS:" + selected);
+				pageStack.replace(loadingPage);
 				appWindow.refreshContacts(selected)
-				pageStack.pop()
 			}
         }
 
