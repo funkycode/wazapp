@@ -23,13 +23,16 @@ from PySide import QtCore
 from PySide.QtCore import QThread
 import socket
 from waexceptions import *
+from wadebug import WADebug
 
 class WALogin(QThread):
 	
 	dictionary = [ None, None, None, None, None, "1", "1.0", "ack", "action", "active", "add", "all", "allow", "apple", "audio", "auth", "author", "available", "bad-request", "base64", "Bell.caf", "bind", "body", "Boing.caf", "cancel", "category", "challenge", "chat", "clean", "code", "composing", "config", "conflict", "contacts", "create", "creation", "default", "delay", "delete", "delivered", "deny", "DIGEST-MD5", "DIGEST-MD5-1", "dirty", "en", "enable", "encoding", "error", "expiration", "expired", "failure", "false", "favorites", "feature", "field", "free", "from", "g.us", "get", "Glass.caf", "google", "group", "groups", "g_sound", "Harp.caf", "http://etherx.jabber.org/streams", "http://jabber.org/protocol/chatstates", "id", "image", "img", "inactive", "internal-server-error", "iq", "item", "item-not-found", "jabber:client", "jabber:iq:last", "jabber:iq:privacy", "jabber:x:delay", "jabber:x:event", "jid", "jid-malformed", "kind", "leave", "leave-all", "list", "location", "max_groups", "max_participants", "max_subject", "mechanism", "mechanisms", "media", "message", "message_acks", "missing", "modify", "name", "not-acceptable", "not-allowed", "not-authorized", "notify", "Offline Storage", "order", "owner", "owning", "paid", "participant", "participants", "participating", "particpants", "paused", "picture", "ping", "PLAIN", "platform", "presence", "preview", "probe", "prop", "props", "p_o", "p_t", "query", "raw", "receipt", "receipt_acks", "received", "relay", "remove", "Replaced by new connection", "request", "resource", "resource-constraint", "response", "result", "retry", "rim", "s.whatsapp.net", "seconds", "server", "session", "set", "show", "sid", "sound", "stamp", "starttls", "status", "stream:error", "stream:features", "subject", "subscribe", "success", "system-shutdown", "s_o", "s_t", "t", "TimePassing.caf", "timestamp", "to", "Tri-tone.caf", "type", "unavailable", "uri", "url", "urn:ietf:params:xml:ns:xmpp-bind", "urn:ietf:params:xml:ns:xmpp-sasl", "urn:ietf:params:xml:ns:xmpp-session", "urn:ietf:params:xml:ns:xmpp-stanzas", "urn:ietf:params:xml:ns:xmpp-streams", "urn:xmpp:delay", "urn:xmpp:ping", "urn:xmpp:receipts", "urn:xmpp:whatsapp", "urn:xmpp:whatsapp:dirty", "urn:xmpp:whatsapp:mms", "urn:xmpp:whatsapp:push", "value", "vcard", "version", "video", "w", "w:g", "w:p:r", "wait", "x", "xml-not-well-formed", "xml:lang", "xmlns", "xmlns:stream", "Xylophone.caf", "account","digest","g_notify","method","password","registration","stat","text","user","username","event","latitude","longitude"]
 	
-	
-	
+	dictionaryIn = ["w:profile:picture"]
+
+	''' new items: "ib", "DIGEST-MD5-2", "duplicate", "fail", "user-not-found", "s.us", "unsubscribe", "timeout", "urn:xmpp:whatsapp:account", "WAUTH-1" '''
+
 	#unsupported yet:
 	''',"true","after","before", "broadcast","count","features","first", "index","invalid-mechanism", "last","max","offline", "proceed","required","sync","elapsed","ip","microsoft","mute","nokia","off","pin","pop_mean_time","pop_plus_minus","port","reason", "server-error","silent","timout", "lc", "lg", "bad-protocol", "none", "remote-server-timeout", "service-unavailable", "w:p", "w:profile:picture", "notification"];'''
 	nonce_key = "nonce=\""
@@ -43,12 +46,14 @@ class WALogin(QThread):
 	def __init__(self,conn,reader,writer,digest):
 		super(WALogin,self).__init__();
 		
+		WADebug.attach(self);
+		
 		self.conn = conn
 		self.out = writer;
 		self.inn = reader;
 		self.digest = digest;
 		
-		Utilities.debug("WALOGIN INIT");
+		self._d("WALOGIN INIT");
 		
 		
 	
@@ -62,20 +67,20 @@ class WALogin(QThread):
 			self.conn.connect((HOST, PORT));
 			
 			self.conn.connected = True
-			Utilities.debug("Starting stream");
+			self._d("Starting stream");
 			self.out.streamStart(self.connection.domain,self.connection.resource);
 	
 			self.sendFeatures();
-			Utilities.debug("Sent Features");
+			self._d("Sent Features");
 			self.sendAuth();
-			Utilities.debug("Sent Auth");
+			self._d("Sent Auth");
 			self.inn.streamStart();
-			Utilities.debug("read stream start");
+			self._d("read stream start");
 			challengeData = self.readFeaturesAndChallenge();
-			Utilities.debug("read features and challenge");
-			#Utilities.debug(challengeData);
+			self._d("read features and challenge");
+			#self._d(challengeData);
 			self.sendResponse(challengeData);
-			Utilities.debug("read stream start");
+			self._d("read stream start");
 		
 			self.readSuccess();
 			#print self.out.out.recv(1638400);
@@ -105,14 +110,14 @@ class WALogin(QThread):
 		
 		while root is not None:
 			if ProtocolTreeNode.tagEquals(root,"stream:features"):
-				#Utilities.debug("GOT FEATURES !!!!");
+				#self._d("GOT FEATURES !!!!");
 				server_supports_receipt_acks = root.getChild("receipt_acks") is not None;
 				root = self.inn.nextTree();
 				
 				continue;
 			
 			if ProtocolTreeNode.tagEquals(root,"challenge"):
-				#Utilities.debug("GOT CHALLENGE !!!!");
+				#self._d("GOT CHALLENGE !!!!");
 				self.connection.supports_receipt_acks = self.connection.supports_receipt_acks and server_supports_receipt_acks;
 				#String data = new String(Base64.decode(root.data.getBytes()));
 				data = base64.b64decode(root.data);
@@ -209,7 +214,7 @@ class WALogin(QThread):
 	
 	def readSuccess(self):
 		node = self.inn.nextTree();
-		Utilities.debug("Login Status: "+node.tag);
+		self._d("Login Status: %s"%(node.tag));
 		
 		
 		
@@ -223,12 +228,12 @@ class WALogin(QThread):
 		
 		
 		if expiration is not None:
-			Utilities.debug("Expires: "+str(expiration));
+			self._d("Expires: "+str(expiration));
 			self.connection.expire_date = expiration;
 			
 	
 		kind = node.getAttributeValue("kind");
-		Utilities.debug("Account type: "+kind)
+		self._d("Account type: %s"%(kind))
 		
 		if kind == "paid":
 			self.connection.account_kind = 1;
@@ -238,7 +243,7 @@ class WALogin(QThread):
 			self.connection.account_kind = -1;
 			
 		status = node.getAttributeValue("status");
-		Utilities.debug("Account status: "+status);
+		self._d("Account status: %s"%(status));
 		
 		if status == "expired":
 			self.loginFailed.emit()

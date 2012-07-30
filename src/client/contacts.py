@@ -16,10 +16,15 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with 
 Wazapp. If not, see http://www.gnu.org/licenses/.
 '''
+import os
+from PySide.QtGui import *
 from utilities import Utilities
 from warequest import WARequest
 from xml.dom import minidom
 from PySide.QtCore import QObject
+from PySide.QtCore import QUrl
+from PySide.QtCore import Qt
+from PySide.QtGui import QImage
 from PySide import QtCore;
 from QtMobility.Contacts import *
 from litestore import LiteStore as DataStore
@@ -27,6 +32,8 @@ from xml.dom import minidom
 from Models.contact import Contact
 from constants import WAConstants
 import thread
+from wadebug import WADebug;
+import sys
 
 class ContactsSyncer(WARequest):
 	'''
@@ -36,21 +43,32 @@ class ContactsSyncer(WARequest):
 	contactsRefreshFail = QtCore.Signal();
 	contactsSyncStatus = QtCore.Signal(str);
 
-	def __init__(self,store):
+	def __init__(self,store,userid):
+		WADebug.attach(self);
 		self.store = store;
+		self.uid = userid;
 		self.base_url = "sro.whatsapp.net";
 		self.req_file = "/client/iphone/bbq.php";
 		super(ContactsSyncer,self).__init__();
 
 	def sync(self):
-		print "INITiATING SYNC"
+		self._d("INITiATING SYNC")
 		self.contactsSyncStatus.emit("GETTING");
-		cm = ContactsManager();
-		phoneContacts = cm.getContacts();
+		self.clearParams();
 
-		for c in phoneContacts:
-			self.addParam("u[]",c['number'])
+		if self.uid == "ALL":
+			cm = ContactsManager();
+			phoneContacts = cm.getContacts();
+			for c in phoneContacts:
+				self.addParam("u[]",c['number'])
 
+		else:
+			parts = self.uid.split(',')
+			for part in parts:
+				if part != "undefined":
+					self._d("ADDING CONTACT FOR SYNC " + part)
+					self.addParam("u[]",part)
+		
 		self.addParam("me",self.store.account.phoneNumber);
 		self.addParam("cc",self.store.account.cc)
 
@@ -67,8 +85,9 @@ class ContactsSyncer(WARequest):
 		
 	def updateContacts(self,data):
 		#data = str(data);
-		data =minidom.parseString(data);
-		contacts  = data.getElementsByTagName("s");
+		data = minidom.parseString(data);
+		contacts = data.getElementsByTagName("s");
+	
 		for c in contacts:
 			self.contactsSyncStatus.emit("LOADING");
 			contactObj = self.store.Contact.create();
@@ -87,6 +106,7 @@ class ContactsSyncer(WARequest):
 				matchingContact =  self.store.Contact.findFirst({"jid":contactObj.jid});
 				contactObj.id = matchingContact.id if matchingContact else 0;
 				contactObj.save();
+
 				
 		self.contactsRefreshSuccess.emit();
 		
@@ -97,7 +117,7 @@ class ContactsSyncer(WARequest):
 		try:
 			self.sync();
 		except:
-			print sys.exc_info()[1]
+			self._d(sys.exc_info()[1])
 			self.contactsRefreshFail.emit()
 		#self.exec_();
 
@@ -107,29 +127,49 @@ class WAContacts(QObject):
 	contactsRefreshed = QtCore.Signal();
 	contactsRefreshFailed = QtCore.Signal();
 	contactsSyncStatusChanged = QtCore.Signal(str);
+	contactUpdated = QtCore.Signal(str);
 
 	def __init__(self,store):
 		super(WAContacts,self).__init__();
 		self.store = store;
 		self.contacts = [];
 		self.raw_contacts = None;
+		self.manager = ContactsManager();
 		
 		
 	
-	def initiateSyncer(self):
-		self.syncer = ContactsSyncer(self.store);
+	def initiateSyncer(self, userid):
+		self.syncer = ContactsSyncer(self.store,userid);
 		#self.syncer.done.connect(self.syncer.updateContacts);
 		self.syncer.contactsRefreshSuccess.connect(self.contactsRefreshed);
 		self.syncer.contactsRefreshFail.connect(self.contactsRefreshFailed);
 		self.syncer.contactsSyncStatus.connect(self.contactsSyncStatusChanged);
 
-	def resync(self):
-		self.initiateSyncer();
+	def resync(self, userid=None):
+		self.initiateSyncer(userid);
 		self.refreshing.emit();
 		self.syncer.start();
 		
+		
+	def updateContact(self,jid):
+		jname = jid.replace("@s.whatsapp.net","").replace("@g.us","")
+		user_img = QImage("/opt/waxmppplugin/bin/wazapp/UI/common/images/user.png")
+		user_img.save("/home/user/.cache/wazapp/contacts/" + jname + ".png", "PNG")
+		user_img = QImage("/home/user/.cache/wazapp/contacts/" + jname + ".jpg")
+		mask_img = QImage("/opt/waxmppplugin/bin/wazapp/UI/common/images/usermask.png")
+		preimg = QPixmap.fromImage(QImage(user_img.scaled(96, 96, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)));
+		PixmapToBeMasked = QImage(96, 96, QImage.Format_ARGB32_Premultiplied);
+		Mask = QPixmap.fromImage(mask_img);
+		Painter = QPainter(PixmapToBeMasked);
+		Painter.drawPixmap(0, 0, 96, 96, preimg);
+		Painter.setCompositionMode(QPainter.CompositionMode_DestinationIn);
+		Painter.drawPixmap(0, 0, 96, 96, Mask);
+		Painter.end()
+		PixmapToBeMasked.save("/home/user/.cache/wazapp/contacts/" + jname + ".png", "PNG")
+		os.remove("/home/user/.cache/wazapp/contacts/" + jname + ".jpg")
+		self.contactUpdated.emit(jid);
 
-	
+				
 	def getContacts(self):
 		contacts = self.store.Contact.fetchAll();
 		if len(contacts) == 0:
@@ -137,14 +177,36 @@ class WAContacts(QObject):
 			#self.resync();
 			return contacts;		
 		#O(n2) matching, need to change that
-		cm = ContactsManager();
+		cm = self.manager
 		phoneContacts = cm.getContacts();
 		tmp = []
 		self.contacts = {};
 		
+		if not os.path.exists("/home/user/.cache/wazapp/contacts"):
+			os.makedirs("/home/user/.cache/wazapp/contacts")
+
 		for wc in contacts:
 			for c in phoneContacts:
 				if wc.number == c['number']:
+					#@@TODO cache to enhance startup
+					jname = wc.jid.replace("@s.whatsapp.net","")
+					if not os.path.isfile("/home/user/.cache/wazapp/contacts/" + jname + ".png"):
+						user_img = QImage(QUrl(c['picture']).toString().replace("file://",""))
+						if os.path.isfile("/home/user/.cache/wazapp/contacts/" + jname + ".jpg"):
+							user_img = QImage("/home/user/.cache/wazapp/contacts/" + jname + ".jpg")
+						mask_img = QImage("/opt/waxmppplugin/bin/wazapp/UI/common/images/usermask.png")
+						preimg = QPixmap.fromImage(QImage(user_img.scaled(96, 96, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)));
+						PixmapToBeMasked = QImage(96, 96, QImage.Format_ARGB32_Premultiplied);
+						Mask = QPixmap.fromImage(mask_img);
+						Painter = QPainter(PixmapToBeMasked);
+						Painter.drawPixmap(0, 0, 96, 96, preimg);
+						Painter.setCompositionMode(QPainter.CompositionMode_DestinationIn);
+						Painter.drawPixmap(0, 0, 96, 96, Mask);
+						Painter.end()
+						PixmapToBeMasked.save("/home/user/.cache/wazapp/contacts/" + jname + ".png", "PNG")
+						if os.path.isfile("/home/user/.cache/wazapp/contacts/" + jname + ".jpg"):
+							os.remove("/home/user/.cache/wazapp/contacts/" + jname + ".jpg")
+					c['picture'] = "/home/user/.cache/wazapp/contacts/" + jname + ".png";
 					wc.setRealTimeData(c['name'],c['picture']);
 					if wc.status is not None:
 						wc.status = wc.status.decode('utf-8');

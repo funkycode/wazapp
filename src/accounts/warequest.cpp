@@ -22,7 +22,7 @@
 #include "warequest.h"
 #include <QDebug>
 
-const QString WARequest::userAgent = "WhatsApp/2.6.61 S60Version/5.2 Device/C7-00";
+const QString WARequest::userAgent = "WhatsApp/2.8.4 S60Version/5.2 Device/C7-00";
 
 WARequest::WARequest()
 {

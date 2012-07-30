@@ -25,7 +25,7 @@ symbian:TARGET.CAPABILITY += NetworkServices
 
 # If your application uses the Qt Mobility libraries, uncomment the following
 # lines and add the respective components to the MOBILITY variable.
- CONFIG += mobility console
+ CONFIG += mobility console location
  MOBILITY += systeminfo messaging
 
 # Speed up launching on MeeGo/Harmattan when using applauncherd daemon
@@ -93,6 +93,18 @@ accountsiconx.path =  /usr/share/themes/blanco/meegotouch/icons
 
 INSTALLS += accountsiconx
 
+powervr.files = python.ini
+powervr.path =  /etc/powervr.d
+
+INSTALLS += powervr
+
+translation.files = lang/tr_es.ts \
+                    lang/tr_es.qm
+translation.path = /opt/waxmppplugin/qml/waxmppplugin/i18n
+INSTALLS += translation
+
+
+
 #notificationicons.files = icon-m-low-power-mode-wazapp-message.png \
                           #icon-s-status-notifier-wazapp-message.png \
                           #icon-s-status-wazapp-message.png
@@ -143,11 +155,15 @@ OTHER_FILES += \
     qtc_packaging/debian_harmattan/copyright \
     qtc_packaging/debian_harmattan/control \
     qtc_packaging/debian_harmattan/compat \
-    qtc_packaging/debian_harmattan/changelog
+    qtc_packaging/debian_harmattan/changelog \
+    qtc_packaging/debian_harmattan/postinst \
+    qtc_packaging/debian_harmattan/prerm
 
 contains(MEEGO_EDITION,harmattan) {
     desktopfile.files = waxmppplugin.desktop
     desktopfile.path = /usr/share/applications
     INSTALLS += desktopfile
 }
+
+
 

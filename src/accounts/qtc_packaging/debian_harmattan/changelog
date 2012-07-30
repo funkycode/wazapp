@@ -1,5 +1,5 @@
-waxmppplugin (0.0.1) unstable; urgency=low
+wazapp (0.2.6) unstable; urgency=low
+  * Cepi fixes
 
-  * Initial Release.
+ -- matias <cepiperez@gmail.com>  Sat, 14 jul 2012 11:36:26 -0300
 
- -- matias <matias@unknown>  Sun, 27 May 2012 02:20:13 -0300
