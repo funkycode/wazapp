@@ -132,7 +132,7 @@ WAPage {
 
 		onGroupParticipants: { 
 			var list = groupParticipantsIds.split(",")
-			//console.log("PARTICIPANTS: " + list)
+			//consoleDebug("PARTICIPANTS: " + list)
 		    for(var i =0; i<contactsModel.count; i++) {
 		        if( list.indexOf(contactsModel.get(i).jid)>-1 ) {
 					list.splice(list.indexOf(contactsModel.get(i).jid),1)
@@ -148,7 +148,7 @@ WAPage {
 					"contactJid":contactsModel.get(i).jid})
 				}
 		    }
-			console.log("PARTICIPANTS: " + list)
+			consoleDebug("PARTICIPANTS: " + list)
 			for (var i=0; i<list.length; i++) {
 				participantsModel.append({"contactPicture":"../common/images/user.png",
 				"contactName":list[i].split('@')[0],
@@ -422,7 +422,7 @@ WAPage {
 					id: bcArea
 					anchors.fill: parent
 					onClicked: {
-						console.log("REMOVING " +contactJid)
+						consoleDebug("REMOVING " +contactJid)
 						participantsModel.remove(cindex)
 						var newSelectedContacts = selectedContacts
 						newSelectedContacts = newSelectedContacts.replace(contactJid,"")

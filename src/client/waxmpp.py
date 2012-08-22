@@ -89,11 +89,9 @@ class WAEventHandler(WAEventBase):
 	getPictureIds = QtCore.Signal(str);
 	getPicture = QtCore.Signal(str, str);
 	profilePictureUpdated = QtCore.Signal(str);
-	getPicture = QtCore.Signal(str, str);
 	setPicture = QtCore.Signal(str, str);
 	doQuit = QtCore.Signal();
-	
-	
+
 
 	def __init__(self,conn):
 		
@@ -109,6 +107,7 @@ class WAEventHandler(WAEventBase):
 		
 		self.account = "";
 
+		self.blockedContacts = "";
 		
 		#self.connMonitor.sleeping.connect(self.networkUnavailable);
 		#self.connMonitor.checked.connect(self.checkConnection);
@@ -424,13 +423,18 @@ class WAEventHandler(WAEventBase):
 		self.conn.sendMessageWithLocation(fmsg,latitude,longitude,iconBase);
 
 
+	def setBlockedContacts(self,contacts):
+		self._d("Blocked contacts: " + contacts)
+		self.blockedContacts = contacts;
+
+
 	def sendVCard(self,jid,contactName):
 		contactName = contactName.encode('utf-8')
-		self._d("Sending vcard: " + "/home/user/.cache/wazapp/vcards/" + contactName + ".vcf")
+		self._d("Sending vcard: " + "/home/user/MyDocs/Wazapp/media/contacts/" + contactName + ".vcf")
 
 		stream = ""
 		while not "END:VCARD" in stream:
-			f = open("/home/user/.cache/wazapp/vcards/"+contactName+".vcf", 'r')
+			f = open("/home/user/MyDocs/Wazapp/media/contacts/"+contactName+".vcf", 'r')
 			stream = f.read()
 			f.close()
 			sleep(0.1)
@@ -442,7 +446,7 @@ class WAEventHandler(WAEventBase):
 		mediaItem = WAXMPP.message_store.store.Media.create()
 		mediaItem.mediatype_id = 6
 		mediaItem.remote_url = None
-		mediaItem.local_path = "/home/user/.cache/wazapp/vcards/"+contactName+".vcf"
+		mediaItem.local_path = "/home/user/MyDocs/Wazapp/media/contacts/"+contactName+".vcf"
 		mediaItem.transfer_status = 2
 
 		if "PHOTO;BASE64" in stream:
@@ -511,12 +515,15 @@ class WAEventHandler(WAEventBase):
 						
 			msgContent = fmsg.content
 			contactName = msg_contact.name
-			if fmsg.type == 20:
+			if fmsg.type == 23:
+				msgContent = QtCore.QCoreApplication.translate("WAEventHandler", "%1 has changed the group picture")
+				msgContent = msgContent.replace("%1", contactName)
+			elif fmsg.type == 20:
 				msgContent = QtCore.QCoreApplication.translate("WAEventHandler", "%1 has join the group")
-				msgContent = msgContent.replace("%1", fmsg.content)
+				msgContent = msgContent.replace("%1", contactName)
 			elif fmsg.type == 21:
 				msgContent = QtCore.QCoreApplication.translate("WAEventHandler", "%1 has left the group")
-				msgContent = msgContent.replace("%1", fmsg.content)
+				msgContent = msgContent.replace("%1", contactName)
 			elif fmsg.type == 22:
 				msgContent = QtCore.QCoreApplication.translate("WAEventHandler", "%1 has changed the subject to %2")
 				if contactName == self.account:
@@ -535,6 +542,10 @@ class WAEventHandler(WAEventBase):
 			self._d("A {msg_type} message was received: {data}".format(msg_type=msg_type, data=fmsg.content));
 		else:
 			self._d("A {msg_type} message was received".format(msg_type=msg_type));
+			
+		#if fmsg.type == 23:
+		#	conversation = fmsg.getConversation();
+		#	self.conn.sendGetPicture(conversation.jid,"image")
 
 		if(fmsg.wantsReceipt):
 			self.conn.sendMessageReceived(fmsg);
@@ -646,7 +657,7 @@ class WAEventHandler(WAEventBase):
 				self.conn.sendGetPicture(self.listJids[0],"image")
 
 	def onSetPicture(self,jid,res):
-		self._d("Set Picture "+res)
+		self._d("Getting Picture "+res +" for "+jid)
 		if res == "done":
 			self.conn.sendGetPicture(jid,"image")
 
@@ -673,7 +684,12 @@ class StanzaReader(QThread):
 		while flag == True:
 			
 			self._d("waiting");
-			ready = select.select([self.inn.rawIn], [], [])
+			try:
+				ready = select.select([self.inn.rawIn], [], [])
+			except:
+				self._d("Error in ready")
+				return
+			
 			if ready[0]:
 				try:
 					node = self.inn.nextTree();
@@ -788,11 +804,11 @@ class StanzaReader(QThread):
 							status = node.getAttributeValue("status")
 							
 							if add is not None:
-								self._d("GROUP EVENT ADD")
-								self.parseMessage(node)	
+								self._d("GROUP EVENT ADD OLD VERSION")
+								#self.parseMessage(node)	
 							elif remove is not None:
-								self._d("GROUP EVENT REMOVE")
-								self.parseMessage(node)	
+								self._d("GROUP EVENT REMOVE OLD VERSION")
+								#self.parseMessage(node)	
 							elif status == "dirty":
 								categories = self.parseCategories(node);
 								self.eventHandler.onDirty(categories);
@@ -804,7 +820,7 @@ class StanzaReader(QThread):
 						subject = node.getAttributeValue("type");
 						
 						if subject == "subject" and fromAttribute.index('-') != -1:
-							self._d("SUBJECT UPDATED")
+							self._d("GROUP SUBJECT UPDATED")
 							self.parseMessage(node)	
 								
 					elif ProtocolTreeNode.tagEquals(node,"message"):
@@ -864,7 +880,7 @@ class StanzaReader(QThread):
 		self.eventHandler.onAddedParticipants()
 
 	def handleRemovedParticipants(self,fromm,successVector=None,failTable=None):
-		print "handleRemovedParticipants DONE!";
+		self._d("handleRemovedParticipants DONE!");
 		self.eventHandler.onRemovedParticipants()
 
 	def handleGroupCreated(self,node,jid):
@@ -906,8 +922,8 @@ class StanzaReader(QThread):
 		
 	def handleGetPictureIds(self,node,jid=None):
 		groupNode = node.getChild("list")
-		print "RESPUESTA PICTURE IDS"
-		print groupNode.toString()
+		self._d("RESPUESTA PICTURE IDS")
+		self._d(groupNode.toString())
 		#1340436828
 		children = groupNode.getAllChildren("user");
 		jids = []
@@ -948,14 +964,14 @@ class StanzaReader(QThread):
 		return stamp
 	
 	def parseMessage(self,messageNode):
-	
-		if "Offline Storage" in messageNode.toString():
-			return;
+
+		#if "Offline Storage" in messageNode.toString():
+		#	return;
 
 		bodyNode = messageNode.getChild("body");
 		newSubject = "" if bodyNode is None else bodyNode.data;
 		if newSubject.find("New version of WhatsApp Messenger is now available")>-1:
-			print "Rejecting whatsapp server message"
+			self._d("Rejecting whatsapp server message")
 			return #REJECT THIS FUCKING MESSAGE!
 
 
@@ -965,6 +981,15 @@ class StanzaReader(QThread):
 		fromAttribute = messageNode.getAttributeValue("from");
 		author = messageNode.getAttributeValue("author");
 		
+		if fromAttribute is not None and fromAttribute in self.eventHandler.blockedContacts:
+			self._d("CONTACT BLOCKED!")
+			return
+
+		if fromAttribute is not None and fromAttribute in self.eventHandler.blockedContacts:
+			self._d("CONTACT BLOCKED!")
+			return
+
+
 		fmsg = WAXMPP.message_store.createMessage(fromAttribute)
 		fmsg.wantsReceipt = False
 		
@@ -979,8 +1004,6 @@ class StanzaReader(QThread):
 		msg_id = messageNode.getAttributeValue("id");
 		attribute_t = messageNode.getAttributeValue("t");
 		
-		
-
 		typeAttribute = messageNode.getAttributeValue("type");
 
 		if typeAttribute == "error":
@@ -1001,41 +1024,74 @@ class StanzaReader(QThread):
 				message.status = 7
 				self.eventHandler.message_error(message,errorCode);
 		
-		elif typeAttribute == "available":
-			print "GROUP NOTIFICATION!"
-			receiptRequested = False;
+		
+		
+		elif typeAttribute == "notification":
+			print "NOTIFICATION!"
+			#return
+			
+			if fromAttribute is not None and msg_id is not None:
+				key = Key(fromAttribute,True,msg_id);
+				ret = WAXMPP.message_store.get(key);
 
-			addSubject = messageNode.getAttributeValue("add");
-			removeSubject = messageNode.getAttributeValue("remove");
-			cont = False
-			if addSubject is not None and self.lastContactAddded != addSubject:
-				if addSubject == self.eventHandler.account:
-					print "THIS IS ME! GETTING OWNER..."
-					addSubject = fromAttribute.split('-')[0]+"@s.whatsapp.net"
-				self.lastContactAddded = addSubject
-				if addSubject == self.eventHandler.account:
-					return;
-				print "CONTACTO AGREGADO : " + addSubject
+				if ret is not None:
+					print "DUPLICATE MESSAGE!!!"
+					return
+
+			#return;
+			receiptRequested = False;
+			pictureUpdated = None
+
+			pictureUpdated = messageNode.getChild("notification").getAttributeValue("type");
+
+			if pictureUpdated == "picture":
+				print "GROUP PICTURE UPDATED!"
+				bodyNode = messageNode.getChild("notification").getChild("set");
+				author = bodyNode.getAttributeValue("author");
 				fmsg.Media = None
-				key = Key(fromAttribute,False,"");
-				print "MESSAGE KEY ::::::::::::::::::::::::::::::: " + key.toString();
-				fmsg.setData({"status":0,"key":key.toString(),"content":addSubject,"type":20});
-				author = addSubject
+				fmsg.setData({"status":0,"key":key.toString(),"content":author,"type":23});
 				cont = True
-			elif removeSubject is not None and self.lastContactRemoved != removeSubject:
-				if removeSubject == self.eventHandler.account:
-					print "THIS IS ME! GETTING OWNER..."
-					removeSubject = fromAttribute.split('-')[0]+"@s.whatsapp.net"
-				self.lastContactRemoved = removeSubject
-				if addSubject == self.eventHandler.account:
-					return;
-				print "CONTACTO ELIMINADO : " + removeSubject
-				fmsg.Media = None
-				key = Key(fromAttribute,False,"");
-				print "MESSAGE KEY ::::::::::::::::::::::::::::::: " + key.toString();
-				fmsg.setData({"status":0,"key":key.toString(),"content":removeSubject,"type":21});
-				author = removeSubject
-				cont = True
+
+			else:
+				addSubject = None
+				removeSubject = None
+
+				bodyNode = messageNode.getChild("notification").getChild("add");
+				if bodyNode is not None:
+					addSubject = bodyNode.getAttributeValue("jid");
+
+				bodyNode = messageNode.getChild("notification").getChild("remove");
+				if bodyNode is not None:
+					removeSubject = bodyNode.getAttributeValue("jid");
+
+				cont = False
+
+				if addSubject is not None and self.lastContactAddded != addSubject:
+					if addSubject == self.eventHandler.account:
+						print "THIS IS ME! GETTING OWNER..."
+						addSubject = fromAttribute.split('-')[0]+"@s.whatsapp.net"
+					self.lastContactAddded = addSubject
+					if addSubject == self.eventHandler.account:
+						return;
+					self._d("Contact added: " + addSubject)
+					fmsg.Media = None
+					#key = Key(fromAttribute,True,msg_id);
+					fmsg.setData({"status":0,"key":key.toString(),"content":addSubject,"type":20});
+					author = addSubject
+					cont = True
+				elif removeSubject is not None and self.lastContactRemoved != removeSubject:
+					if removeSubject == self.eventHandler.account:
+						print "THIS IS ME! GETTING OWNER..."
+						removeSubject = fromAttribute.split('-')[0]+"@s.whatsapp.net"
+					self.lastContactRemoved = removeSubject
+					if addSubject == self.eventHandler.account:
+						return;
+					self._d("Contact removed: " + removeSubject)
+					fmsg.Media = None
+					#key = Key(fromAttribute,True,msg_id);
+					fmsg.setData({"status":0,"key":key.toString(),"content":removeSubject,"type":21});
+					author = removeSubject
+					cont = True
 
 			if fmsg.timestamp is None:
 				fmsg.timestamp = time.time()*1000;
@@ -1053,20 +1109,24 @@ class StanzaReader(QThread):
 						self._d("GETTING GROUP INFO")
 						self.connection.sendGetGroupInfo(fromAttribute)
 				
-					if not len(conversation.getContacts()):
-						self._d("GETTING GROUP CONTACTS")
-						self.connection.sendGetParticipants(fromAttribute)
+					#if not len(conversation.getContacts()):
+					#	self._d("GETTING GROUP CONTACTS")
+					#	self.connection.sendGetParticipants(fromAttribute)
 					
 				ret = WAXMPP.message_store.get(key);
-			
-				conversation.incrementNew();		
-				WAXMPP.message_store.pushMessage(fromAttribute,fmsg)
-				fmsg.key = key
 				duplicate = False;
-			
+				if ret is None:
+					conversation.incrementNew();		
+					WAXMPP.message_store.pushMessage(fromAttribute,fmsg)
+					fmsg.key = key
+				else:
+					fmsg.key = eval(ret.key)
+					duplicate = True;
+						
 				if signal:
-					self.eventHandler.message_received(fmsg,False);
-			
+					self.eventHandler.message_received(fmsg,duplicate);
+		
+		
 		elif typeAttribute == "subject":
 			receiptRequested = False;
 			requestNodes = messageNode.getAllChildren("request");
@@ -1086,7 +1146,6 @@ class StanzaReader(QThread):
 			if newSubject is not None and self.eventHandler is not None:
 				fmsg.Media = None
 				key = Key(fromAttribute,False,newSubject);
-				print "MESSAGE KEY ::::::::::::::::::::::::::::::: " + key.toString();
 				fmsg.setData({"status":0,"key":key.toString(),"content":newSubject,"type":22});
 
 				if fmsg.timestamp is None:
@@ -1099,9 +1158,7 @@ class StanzaReader(QThread):
 					fmsg.contact_id = contact.id
 					fmsg.contact = contact
 					ret = WAXMPP.message_store.get(key);
-					#conversation.incrementNew();		
-					#WAXMPP.message_store.pushMessage(fromAttribute,fmsg)
-					#fmsg.key = key
+
 					duplicate = False;
 					if ret is None:
 						conversation.incrementNew();		
@@ -1173,9 +1230,9 @@ class StanzaReader(QThread):
 						msgdata = messageNode.getChild("media").getChild("vcard").toString()
 						msgname = messageNode.getChild("media").getChild("vcard").getAttributeValue("name")
 						if msgdata is not None:
-							if not os.path.exists("/home/user/.wazapp/media/contacts"):
-								os.makedirs("/home/user/.wazapp/media/contacts")
-							text_file = open("/home/user/.wazapp/media/contacts/" + msgname + ".vcf", "w")
+							if not os.path.exists("/home/user/MyDocs/Wazapp/media/contacts"):
+								os.makedirs("/home/user/MyDocs/Wazapp/media/contacts")
+							text_file = open("/home/user/MyDocs/Wazapp/media/contacts/" + msgname + ".vcf", "w")
 							n = msgdata.find(">") +1
 							msgdata = msgdata[n:]
 							text_file.write(msgdata.replace("</vcard>",""))
@@ -1184,7 +1241,7 @@ class StanzaReader(QThread):
 							mediaItem.mediatype_id = 6
 							mediaItem.transfer_status = 2
 							msgdata = msgname
-							mediaItem.setData({"local_path": "/home/user/.wazapp/media/contacts/" + msgname + ".vcf"})
+							mediaItem.setData({"local_path": "/home/user/MyDocs/Wazapp/media/contacts/" + msgname + ".vcf"})
 							photo = messageNode.getChild("media").getChild("vcard").toString()
 
 							if "PHOTO;BASE64" in photo:
@@ -1194,12 +1251,6 @@ class StanzaReader(QThread):
 								vcardImage = vcardImage.replace("END:VCARD","")
 								vcardImage = vcardImage.replace("</vcard>","")
 								mediaItem.preview = vcardImage
-								#image = QImage()
-								#bytearr = QtCore.QByteArray()
-								#bytearr = bytearr.fromBase64(vcardImage)
-								#imagen = image.loadFromData(bytearr, 'PNG')
-								#image.save("/home/user/.wazapp/media/images/" + msgname + ".png", "PNG");
-								#mediaItem.setData({"preview": "/home/user/.wazapp/media/images/" + msgname + ".png"})
 
 							if "PHOTO;TYPE=JPEG" in photo:
 								n = photo.find("PHOTO;TYPE=JPEG") +27
@@ -1207,11 +1258,6 @@ class StanzaReader(QThread):
 								vcardImage = vcardImage.replace("END:VCARD","")
 								vcardImage = vcardImage.replace("</vcard>","")
 								mediaItem.preview = vcardImage
-								#image = QImage()
-								#bytearr = QtCore.QByteArray(vcardImage)
-								#imagen = image.loadFromData(bytearr, 'JPG')
-								#image.save("/home/user/.wazapp/media/images/" + msgname + ".png", "PNG");
-								#mediaItem.setData({"preview": "/home/user/.wazapp/media/images/" + msgname + ".png"})
 
 							if "PHOTO;TYPE=PNG" in photo:
 								n = photo.find("PHOTO;TYPE=PNG") +26
@@ -1219,11 +1265,6 @@ class StanzaReader(QThread):
 								vcardImage = vcardImage.replace("END:VCARD","")
 								vcardImage = vcardImage.replace("</vcard>","")
 								mediaItem.preview = vcardImage
-								#image = QImage()
-								#bytearr = QtCore.QByteArray(vcardImage)
-								#imagen = image.loadFromData(bytearr, 'JPG')
-								#image.save("/home/user/.wazapp/media/images/" + msgname + ".png", "PNG");
-								#mediaItem.setData({"preview": "/home/user/.wazapp/media/images/" + msgname + ".png"})
 								
 
 					else:
@@ -1248,7 +1289,6 @@ class StanzaReader(QThread):
 					fmsg.Media = None
 					
 					key = Key(fromAttribute,False,msg_id);
-					print "MESSAGE KEY ::::::::::::::::::::::::::::::: " + key.toString();
 					fmsg.setData({"status":0,"key":key.toString(),"content":msgdata,"type":WAXMPP.message_store.store.Message.TYPE_RECEIVED});
 					
 				
@@ -1332,9 +1372,9 @@ class StanzaReader(QThread):
 							self._d("GETTING GROUP INFO")
 							self.connection.sendGetGroupInfo(fromAttribute)
 						
-						if not len(conversation.getContacts()):
-							self._d("GETTING GROUP CONTACTS")
-							self.connection.sendGetParticipants(fromAttribute)
+						#if not len(conversation.getContacts()):
+						#	self._d("GETTING GROUP CONTACTS")
+						#	self.connection.sendGetParticipants(fromAttribute)
 							
 					ret = WAXMPP.message_store.get(key);
 					
@@ -1569,7 +1609,7 @@ class WAXMPP():
 		self._d("Resending %i old messages"%(len(messages)))
 		for m in messages:
 			self.sendMessageWithBody(m);
-		
+		self._d("Resending old messages done")
 		
 	
 	def sendTyping(self,jid):
@@ -1817,6 +1857,7 @@ class WAXMPP():
 
 
 	def sendGetPicture(self,jid,ptype):
+		print "GETTING PICTURE FROM " + jid + " - type:" + ptype
 		idx = self.makeId("get_picture_")
 
 		self.stanzaReader.currentPictureJid = jid
@@ -1849,7 +1890,6 @@ class WAXMPP():
 
 	def sendSetPicture(self, jid, filepath):
 		filepath = filepath.replace("file://","")
-		print "Setting image: " + filepath
 		rotation = 0
 		#im = Image.open(filepath)
 		#exif=dict((ExifTags.TAGS[k], v) for k, v in im._getexif().items())
@@ -1857,7 +1897,7 @@ class WAXMPP():
 		#    rotation = 90
 
 
-		img = QImage(filepath);
+		'''img = QImage(filepath);
 		if img.height() > img.width():
 			result = img.scaledToWidth(96,Qt.SmoothTransformation);
 			result = result.copy(0,result.height()/2-32,96,96);
@@ -1870,7 +1910,7 @@ class WAXMPP():
 		else:
 			result = img;
 
-		result.save( "/home/user/.cache/wazapp/tempimg.jpg", "JPG" );
+		result.save( "/home/user/.cache/wazapp/tempimg.jpg", "JPG" );'''
 
 		#if rotation == 90:
 		#	im = Image.open("/home/user/.cache/wazapp/tempimg.jpg")
@@ -1878,8 +1918,9 @@ class WAXMPP():
 		#	im.save("/home/user/.cache/wazapp/tempimg.jpg", "JPEG", quality=85)
 
 
-		currentPictureJid = jid;
-		f = open("/home/user/.cache/wazapp/tempimg.jpg", 'r')
+		self.stanzaReader.currentPictureJid = jid;
+		f = open(filepath, 'r')
+		#f = open("/home/user/.cache/wazapp/tempimg.jpg", 'r')
 		stream = f.read()
 		stream = bytearray(stream)
 		f.close()

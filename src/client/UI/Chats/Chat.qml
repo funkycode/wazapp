@@ -55,7 +55,7 @@ Rectangle{
 		onGroupInfoUpdated: {
 			var data = groupInfoData.split("<<->>")
 			if (jid==groupId) {
-				console.log("CONVERSATION JID: " + jid)
+				consoleDebug("CONVERSATION JID: " + jid)
 				subject = data[2]
 				owner = data[1]
 			}
@@ -79,7 +79,7 @@ Rectangle{
 				break;
 			}
         }
-        return resp
+        return resp.split('@')[0]
     }
 
     function setConversation(c){
@@ -147,20 +147,16 @@ Rectangle{
         id:mouseArea
         anchors.fill: parent
         onClicked: {
-			if (!ChatHelper.conversation.opened) {
+			/*if (!ChatHelper.conversation.opened) {
 				ChatHelper.conversation.loadReverse = true
 				ChatHelper.conversation.loadMoreMessages(19)
 				ChatHelper.conversation.loadReverse = false
-			}
+			}*/
             ChatHelper.conversation.open();
 			if (isGroup && subject=="") {
-				console.log("GETTING GROUP INFO FOR "+jid)
+				consoleDebug("GETTING GROUP INFO FOR "+jid)
 				getGroupInfo(jid)
 			}
-			/*if (jid==myAccount) {
-				console.log("SETTING PICTURE FROM QML")
-				setPicture(jid,"/home/user/MyDocs/avatar.jpg",0,"",0)
-			}*/
         }
         onPressAndHold: optionsRequested()
     }
@@ -247,8 +243,9 @@ Rectangle{
                     text: lastMessage? (lastMessage.type==0 || lastMessage.type==1 ? Helpers.emojify(lastMessage.content) : 
 					  	  (lastMessage.type==20 ? qsTr("%1 has join the group").arg(getAuthor(lastMessage.content)) : 
 						  (lastMessage.type==21 ? qsTr("%1 has left the group").arg(getAuthor(lastMessage.content)) :
-							qsTr("%1 has changed the subject to %2").arg(getAuthor(lastMessage.author.jid)).arg(lastMessage.content) ))) :
-							qsTr("(no messages)")
+						  (lastMessage.type==22 ? qsTr("%1 has changed the subject to %2").arg(getAuthor(lastMessage.author.jid)).arg(lastMessage.content) :
+						  qsTr("%1 has changed the group picture").arg(getAuthor(lastMessage.content)) )))) :
+						  qsTr("(no messages)")
                    	width:parent.width -(status.visible?30:10)
                     elide: Text.ElideRight
                     font.pixelSize: 20

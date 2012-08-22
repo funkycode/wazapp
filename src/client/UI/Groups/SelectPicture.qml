@@ -81,9 +81,8 @@ WAPage {
 
 		delegate: Image {
 			source: "/home/user/.thumbnails/grid/" + Qt.md5(url) + ".jpeg"
-			width: 158
-			height: 158
-			smooth: true
+			width: 160
+			height: 160
 
 			Rectangle {
 				id: rec
@@ -109,11 +108,7 @@ WAPage {
 	            id: mouseArea
 	            anchors.fill: parent
 	            onClicked: {
-					//selectedPicture = url //"/home/user/.thumbnails/grid/" + Qt.md5(url) + ".jpeg" //url
-					//pageStack.replace(Qt.resolvedUrl("SetPicture.qml"))
-
-	                setPicture(profileUser, decodeURIComponent("/home/user/.thumbnails/grid/" + Qt.md5(url) + ".jpeg"))
-					//sendMediaFile(decodeURIComponent("/home/user/.thumbnails/grid/" + Qt.md5(url) + ".jpeg"))
+	                selectedGroupPicture = "/home/user/.thumbnails/grid/" + Qt.md5(url) + ".jpeg"
 					pageStack.pop()
 	            }
 	        }

@@ -41,7 +41,7 @@ Item {
 
     function getBubble(){
 
-		if (from_me==20 || from_me==21 || from_me==22) 
+		if (from_me==20 || from_me==21 || from_me==22 || from_me==23) 
 			return notificationDelegate
 		else {
 		    switch(mediatype_id){
@@ -125,7 +125,7 @@ Item {
                    default: prefix = "file://";break;
                }
 
-			   console.log("OPENING: " + prefix + decodeURIComponent(delegateContainer.media.local_path))
+			   consoleDebug("OPENING: " + prefix + decodeURIComponent(delegateContainer.media.local_path))
                Qt.openUrlExternally( prefix + decodeURIComponent(delegateContainer.media.local_path) );
            }
 

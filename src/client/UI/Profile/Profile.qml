@@ -70,6 +70,7 @@ WAPage {
 		target: appWindow
 		onOnPictureUpdated: {
 			if (myAccount == ujid) {
+				contactPicture = "/home/user/.cache/wazapp/contacts/" + contactNumber + ".png"
 				picture.imgsource = ""
 				picture.imgsource = contactPicture
 			}

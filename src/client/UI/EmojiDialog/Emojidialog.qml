@@ -33,6 +33,7 @@ Dialog {
     function openDialog(){
 
         emojiSelector.open();
+		emojiCategory.checkedButton = peopleEmoji
         emojiSelector.loadEmoji(0,109);
 
     }

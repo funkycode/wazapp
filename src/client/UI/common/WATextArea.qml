@@ -9,6 +9,7 @@ import "/usr/lib/qt4/imports/com/nokia/meego/TextAreaHelper.js" as TextAreaHelpe
 FocusScope {
     id: root
 
+	signal textPasted
 	signal enterKeyClicked
 	signal inputPanelChanged
 	property int lastPosition:0
@@ -57,6 +58,7 @@ FocusScope {
 
     function paste() {
         textEdit.paste()
+		textPasted()
     }
 
     function cut() {
@@ -156,6 +158,10 @@ FocusScope {
         font: root.platformStyle.textFont
         color: "gray"
         elide: Text.ElideRight
+		onVisibleChanged: {
+			if (prompt.visible) platformCloseSoftwareInputPanel()
+			else platformOpenSoftwareInputPanel()
+		}
     }
 
     MouseArea {

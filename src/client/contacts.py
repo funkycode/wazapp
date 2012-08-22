@@ -24,9 +24,11 @@ from xml.dom import minidom
 from PySide.QtCore import QObject
 from PySide.QtCore import QUrl
 from PySide.QtCore import Qt
+from PySide.QtCore import *
 from PySide.QtGui import QImage
 from PySide import QtCore;
 from QtMobility.Contacts import *
+from QtMobility.Versit import *
 from litestore import LiteStore as DataStore
 from xml.dom import minidom
 from Models.contact import Contact
@@ -128,6 +130,7 @@ class WAContacts(QObject):
 	contactsRefreshFailed = QtCore.Signal();
 	contactsSyncStatusChanged = QtCore.Signal(str);
 	contactUpdated = QtCore.Signal(str);
+	contactExported = QtCore.Signal(str,str);
 
 	def __init__(self,store):
 		super(WAContacts,self).__init__();
@@ -219,6 +222,48 @@ class WAContacts(QObject):
 		return sorted(tmp, key=lambda k: k['name'].upper()) ;
 
 
+
+	def getPhoneContacts(self):
+		cm = self.manager
+		phoneContacts = cm.getPhoneContacts();
+		tmp = []
+
+		for c in phoneContacts:
+			wc = [];
+			c['picture'] = QUrl(c['picture']).toString().replace("file://","")
+			wc.append(c['name'])
+			#wc.append(c['id'])
+			wc.append(c['picture'])
+			wc.append(c['numbers'])
+			tmp.append(wc);
+		return sorted(tmp)
+
+	def exportContact(self, jid, name):
+		cm = self.manager
+		phoneContacts = cm.getQtContacts();
+		contacts = []
+
+		for c in phoneContacts:
+			if name == c.displayLabel():
+				print "founded contact: " + c.displayLabel()
+				contacts.append(c)
+				fileName = "/home/user/.cache/wazapp/vcards/" + name + ".vcf"
+				openfile = QFile("/home/user/.cache/wazapp/vcards/" + name + ".vcf")
+				openfile.open(QIODevice.WriteOnly)
+				if openfile.isWritable():
+					exporter = QVersitContactExporter()
+					if exporter.exportContacts(contacts, QVersitDocument.VCard30Type):
+						documents = exporter.documents()
+						writer = QVersitWriter()
+						writer.setDevice(openfile)
+						writer.startWriting(documents)
+						writer.waitForFinished()
+				openfile.close()
+				self.contactExported.emit(jid, name);
+				break;
+
+
+
 class ContactsManager(QObject):
 	'''
 	Provides access to phone's contacts manager API
@@ -239,10 +284,34 @@ class ContactsManager(QObject):
 			avatar = QContactAvatar(avatars[0]).imageUrl() if len(avatars) > 0 else WAConstants.DEFAULT_CONTACT_PICTURE;
 			label =  contact.displayLabel();
 			numbers = contact.details(QContactPhoneNumber.DefinitionName);
+
 			for number in numbers:
 				self.contacts.append({"alphabet":label[0].upper(),"name":label,"number":QContactPhoneNumber(number).number(),"picture":avatar});
 
 		return self.contacts;
+
+
+	def getPhoneContacts(self):
+		contacts = self.manager.contacts();
+		self.contacts = []
+		for contact in contacts:
+			avatars = contact.details(QContactAvatar.DefinitionName);
+			avatar = QContactAvatar(avatars[0]).imageUrl() if len(avatars) > 0 else WAConstants.DEFAULT_CONTACT_PICTURE;
+			label =  contact.displayLabel();
+			#cid =  contact.id();
+			numbers = contact.details(QContactPhoneNumber.DefinitionName);
+			allnumbers = []
+
+			for number in numbers:
+				allnumbers.append(QContactPhoneNumber(number).number())
+
+			self.contacts.append({"name":label,"numbers":allnumbers,"picture":avatar});
+
+		return self.contacts;
+
+
+	def getQtContacts(self):
+		return self.manager.contacts();
 
 
 if __name__ == "__main__":

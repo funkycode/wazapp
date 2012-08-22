@@ -81,19 +81,19 @@ Page {
 
     Column{
         anchors.top: header.bottom
-		height: parent.height - header.height
-		width: parent.width
+        height: parent.height - header.height
+        width: parent.width
 
         Flickable {
-			anchors.fill: parent
-		    anchors.topMargin: 12
-		    anchors.leftMargin: 12
-		    anchors.rightMargin: 12
-			clip: true
-			anchors.margins: 5
-			contentWidth: width
-			contentHeight: form_column.height
-			boundsBehavior: Flickable.StopAtBounds
+            anchors.fill: parent
+            anchors.topMargin: 12
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            clip: true
+            anchors.margins: 5
+            contentWidth: width
+            contentHeight: form_column.height
+            boundsBehavior: Flickable.StopAtBounds
 
             Column{
                 spacing:10

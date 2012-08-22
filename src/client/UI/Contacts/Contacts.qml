@@ -319,7 +319,17 @@ WAPage {
 		MenuLayout {
 			WAMenuItem {
 				height: 80
-				singleItem: true
+				text: blockedContacts.indexOf(profileUser)==-1? qsTr("Block contact") : qsTr("Unblock contact")
+				onClicked: { 
+					if (blockedContacts.indexOf(profileUser)==-1)
+						blockContact(profileUser)
+					else
+						unblockContact(profileUser)
+				}
+			}
+			WAMenuItem {
+				height: 80
+				//singleItem: true
 				text: qsTr("View contact profile")
 				onClicked: { 
 					mainPage.pageStack.push (Qt.resolvedUrl("ContactProfile.qml"))

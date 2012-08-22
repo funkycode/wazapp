@@ -229,6 +229,7 @@ WAPage {
             text: qsTr("Send")
             onClicked: {
 				sendLocation(currentJid,latitudeStr,longitudeStr,appWindow.inPortrait?"true":"false")
+				pageStack.pop()
 			}
         }
        

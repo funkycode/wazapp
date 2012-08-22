@@ -65,7 +65,7 @@ WAPage {
 	Connections {
 		target: content
 		onEmojiSelected: {
-		    console.log("GOT EMOJI "+emojiCode);
+		    consoleDebug("GOT EMOJI "+emojiCode);
 
 		   	var str = cleanText(status_text.text)
 			var pos = str.indexOf("&quot;")
@@ -114,7 +114,7 @@ WAPage {
 				textColor: "black"
 				onActiveFocusChanged: { 
 					lastPosition = status_text.cursorPosition 
-					console.log("LAST POSITION: " + lastPosition)
+					consoleDebug("LAST POSITION: " + lastPosition)
 				}
 			}
 

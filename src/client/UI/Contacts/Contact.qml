@@ -86,26 +86,26 @@ Rectangle{
         anchors.fill: parent
 		onPressAndHold: container.optionsRequested()
         onClicked:{
-            console.log("CLICKED");
+            consoleDebug("CLICKED");
             if(ContactHelper.conversation){
                 //ContactHelper.conversation.jid="sdgsg-fsdfsdf"
-				if (!ContactHelper.conversation.opened) {
+				/*if (!ContactHelper.conversation.opened) {
 					ContactHelper.conversation.loadReverse = true
 					ContactHelper.conversation.loadMoreMessages(19)
 					ContactHelper.conversation.loadReverse = false
-				}
+				}*/
                 ContactHelper.conversation.open()
              }else{
-                console.log("CONTACT: OT FOUND")
+                consoleDebug("CONTACT: NOT FOUND")
 				container.clicked() // Needed to clear quick search
                 ContactHelper.conversation = waChats.getOrCreateConversation(jid);
                 setConversation(ContactHelper.conversation)
                 ContactHelper.conversation.addContact(container);
-				if (!ContactHelper.conversation.opened) {
+				/*if (!ContactHelper.conversation.opened) {
 					ContactHelper.conversation.loadReverse = true
 					ContactHelper.conversation.loadMoreMessages(19)
 					ContactHelper.conversation.loadReverse = false
-				}
+				}*/
                 ContactHelper.conversation.open();
             }
         }
@@ -130,30 +130,40 @@ Rectangle{
 			//onClicked: mouseArea.clicked()
         }
 
-        Column{
-			width: parent.width -80
+		Column{
+			width: parent.width -80 - (userblocked.visible? 54 : 0) 
 			y: contact_status.visible? 0 : 14
-		    Label{
+			Label {
 				y: 2
-		        id: contact_name
-                text:contactShowedName
-		        font.pointSize: 18
+				id: contact_name
+				text:contactShowedName
+				font.pointSize: 18
 				elide: Text.ElideRight
 				width: parent.width -16
 				font.bold: true
-		    }
-		    Label{
-		        id:contact_status
-                text: Helpers.emojify(contactStatus)
-		        font.pixelSize: 20
-		        color: "gray"
+			}
+			Label {
+				id:contact_status
+				text: Helpers.emojify(contactStatus)
+				font.pixelSize: 20
+				color: "gray"
 				width: parent.width -16
 				elide: Text.ElideRight
 				height: 24
 				clip: true
 				visible: contactStatus!==""
-		   }
+			}
+		}
 
-        }
+		Image {
+			id: userblocked
+	        anchors.verticalCenter: parent.verticalCenter
+	        width: 28
+	        height: 28
+	        smooth: true
+	        source: "../common/images/blocked.png"
+			visible: blockedContacts.indexOf(jid)>-1
+		}
+
     }
 }

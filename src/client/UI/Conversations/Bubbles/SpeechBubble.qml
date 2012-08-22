@@ -26,14 +26,14 @@ Rectangle {
     signal clicked();
 
 	width: appWindow.inPortrait ? 480 : 854
-	height: from_me==20 || from_me==21 || from_me==22? bubbleContent.children[0].height + 26 :
+	height: from_me==20 || from_me==21 || from_me==22 || from_me==23? bubbleContent.children[0].height + 30 :
 			bubbleContent.children[0].height + (mediatype_id==1?msg_date.height:0) + 
 			(sender_name.text!=""?sender_name.height:0) + (from_me==1?28:30) ;
 	color: "transparent"
 
     function getBubbleBorderImageSource(){
         var imageSrc = "../images/bubbles/";
-		if (from_me==20 || from_me==21 || from_me==22) {
+		if (from_me==20 || from_me==21 || from_me==22 || from_me==23) {
 			imageSrc += "notification"
 		} else {
 		    imageSrc += from_me==1?"outgoing":"incoming";

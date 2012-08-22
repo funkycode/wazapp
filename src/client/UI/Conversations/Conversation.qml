@@ -16,16 +16,21 @@ WAPage {
             appWindow.setActiveConv("")
 			//opened = false
         }
+        else if(status == PageStatus.Activating){
+			if (!opened) {
+				loadMoreMessages(19)
+				opened = true
+				conv_items.positionViewAtEnd()
+			}
+		}
         else if(status == PageStatus.Active){
             appWindow.conversationActive(jid);
             appWindow.setActiveConv(jid)
 			currentJid = jid
 			pageIsActive = true
-			if (!opened) {
-				//while (conv_data.count>2) conv_data.remove(0)
-				//loadMoreMessages(20)
-				opened = true
-				conv_items.positionViewAtEnd()
+			if(unreadCount){
+				unreadCount =0;
+				onChange();
 			}
 			if (selectedContactName!=="" && jid==currentJid) {
 				sendVCard(currentJid,selectedContactName)
@@ -113,10 +118,10 @@ WAPage {
 
 		positionToAdd = 0;
 
-        console.log("SHOULD LOAD MORE");
+        consoleDebug("SHOULD LOAD MORE");
         appWindow.loadMessages(jid,firstMessage.msg_id,value);
 
-		console.log("END ADDING MESSAGES")
+		consoleDebug("END ADDING MESSAGES")
 		positionToAdd = conv_data.count
 		loadReverse = false
     }
@@ -150,19 +155,19 @@ WAPage {
         for(var i=0;i<ConversationHelper.observers.length;i++){
 
             if(ConversationHelper.observers[i]==o){
-                //console.log("DUPLICATE OBSERVER!!!");
+                //consoleDebug("DUPLICATE OBSERVER!!!");
                 return;
             }
 
         }
 
         ConversationHelper.observers.push(o);
-        //console.log("Added observer");
+        //consoleDebug("Added observer");
     }
 
     function onChange(){
         for(var i=0; i<ConversationHelper.observers.length; i++){
-            //console.log("REBIND")
+            //consoleDebug("REBIND")
             var o = ConversationHelper.observers[i];
             if(o && o.rebind)
                 o.rebind();
@@ -180,11 +185,11 @@ WAPage {
     }
 
     function removeContact(contact){
-        //console.log("SHOULD REMOVE CONTACT WITH JID"+contact.jid);
-        //console.log(ConversationHelper.contacts.length);
+        //consoleDebug("SHOULD REMOVE CONTACT WITH JID"+contact.jid);
+        //consoleDebug(ConversationHelper.contacts.length);
         for(var i=0; i<ConversationHelper.contacts.length; i++){
             if(ConversationHelper.contacts[i].jid == contact.jid){
-                //console.log("REMOVED A CONTACT");
+                //consoleDebug("REMOVED A CONTACT");
                 ConversationHelper.contacts.splice(i,1);
                 return;
             }
@@ -199,7 +204,7 @@ WAPage {
     }
 
     function updateLastMessage(){
-        //console.log("UPDATING LAST MESSAGE AND SHOULD REBIND ALL CONCERNED!");
+        //consoleDebug("UPDATING LAST MESSAGE AND SHOULD REBIND ALL CONCERNED!");
 
         var m = conv_data.get(conv_data.count-1);
 
@@ -234,10 +239,10 @@ WAPage {
         appWindow.conversationOpened(jid);
 
         if(unreadCount){
-            //console.log("OPENED,RESETTING COUNT")
+            //consoleDebug("OPENED,RESETTING COUNT")
             unreadCount =0;
             onChange();
-            //console.log("SHOULD REFLECT!")
+            //consoleDebug("SHOULD REFLECT!")
         }
     }
 
@@ -452,7 +457,7 @@ WAPage {
 				break;
 			}
         }
-        return resp
+        return resp.split('@')[0]
     }
 
     function getAuthorPicture(inputText) {
@@ -464,7 +469,7 @@ WAPage {
 				break;
 			}
         }
-        return resp
+        return resp.split('@')[0]
     }
 
 
@@ -512,7 +517,7 @@ WAPage {
 
 			onOptionsRequested: {
 
-				console.log("options requested ") // + ConversationHelper.getContact(model.author.jid).contactName)
+				consoleDebug("options requested ") // + ConversationHelper.getContact(model.author.jid).contactName)
                 copy_facilitator.text = model.content;
                 selectedMessage = model;
                 selectedMessageIndex = index
@@ -601,12 +606,13 @@ WAPage {
                 Image {
                     x: 16; y: 12;
                     height: 36; width: 36; smooth: true
-                    source: "../common/images/icons/wazapp48.png"
+                    source: "../common/images/icons/wazapp36" + (blockedContacts.indexOf(jid)>-1? "blocked":"") + ".png"
                 }
 
                 MouseArea {
                     id: input_holder_area
                     anchors.fill: parent
+					enabled: blockedContacts.indexOf(jid)==-1
                     onClicked: {
                         showSendButton=true;
                         forceFocusToChatText()
@@ -628,7 +634,7 @@ WAPage {
 					onForceFocusToChatText: chat_text.forceActiveFocus()
 
                     onSendButtonClicked:{
-                        //console.log("SEND CLICKED");
+                        //consoleDebug("SEND CLICKED");
 
                         showSendButton=true;
                         forceFocusToChatText()
@@ -645,7 +651,7 @@ WAPage {
                     }
 
                     onEmojiSelected:{
-                        console.log("GOT EMOJI "+emojiCode);
+                        consoleDebug("GOT EMOJI "+emojiCode);
 
                         /*var str = cleanText(chat_text.text);
 
@@ -700,15 +706,18 @@ WAPage {
                     width:parent.width -60
                     x: 54
                     y: 0
-                    placeholderText: (showSendButton|| cleanText(chat_text.text).trim()!="") ? "" : qsTr("Write your message here")
+                    placeholderText: blockedContacts.indexOf(jid)>-1 ?
+									 qsTr("Contact blocked") : 
+									 (showSendButton|| cleanText(chat_text.text).trim()!="") ? "" : qsTr("Write your message here")
                     platformStyle: myTextFieldStyle
                     wrapMode: TextEdit.Wrap
                     textFormat: Text.RichText
+					enabled: blockedContacts.indexOf(jid)==-1
 
                     property bool alreadyFocused: false
 
 					function cleanTextWithoutLines(txt){
-						//console.log("LAST POSITION: " + lastPosition)
+						//consoleDebug("LAST POSITION: " + lastPosition)
 						var repl = "p, li { white-space: pre-wrap; }";
 						var res = txt;
 						res = Helpers.getCode(res);
@@ -716,12 +725,12 @@ WAPage {
 						res = res.replace(/<[^>]*>?/g, "").replace(repl,"");
 						res = res.replace(/^\s+/,"");
 						while(res.indexOf("wazappLineBreak")>-1) res = res.replace("wazappLineBreak", "<br />");
-						//console.log("PREVIOUS TEXT: "  + res)
+						//consoleDebug("PREVIOUS TEXT: "  + res)
 						return res;
 					}
 
 					onHeightChanged: {
-						//console.log("TEXT AREA HEIGHT: " + parseInt(chat_text.height))
+						//consoleDebug("TEXT AREA HEIGHT: " + parseInt(chat_text.height))
 						currentTextHeight = chat_text.height<72 ? 72 : chat_text.height+12
 						textHeightChanged()
 						if (conversation_view.status == PageStatus.Active)
@@ -729,7 +738,12 @@ WAPage {
 						//input_holder.height = currentTextHeight
 					}
 
+					onTextPasted: {
+						chat_text.text = Helpers.emojify2(chat_text.text)
+					}
+					
                     onTextChanged: {
+						//chat_text.text = Helpers.emojify2(chat_text.text)
                         if(!typingEnabled)
                         {
                             //to prevent initial set of placeHolderText from firing textChanged signal
@@ -739,7 +753,7 @@ WAPage {
 
                         if(!iamtyping)
                         {
-                            console.log("TYPING");
+                            consoleDebug("TYPING");
                             typing(jid);
                         }
                         iamtyping = true;
@@ -776,7 +790,7 @@ WAPage {
 
                     onActiveFocusChanged: {
                         lastPosition = chat_text.cursorPosition
-                        //console.log("LAST POSITION: " + lastPosition)
+                        //consoleDebug("LAST POSITION: " + lastPosition)
 						conv_items.positionViewAtEnd()
                         showSendButton = chat_text.focus || input_button_holder_area.focus || emoji_button.focus
                         if (showSendButton) {
@@ -815,7 +829,7 @@ WAPage {
 		anchors.bottom: parent.bottom
 		anchors.left: parent.left
 		width: parent.width
-		height: (showSendButton)? 72 : 0
+		height: blockedContacts.indexOf(jid)==-1 && showSendButton ? 72 : 0
 		color: theme.inverted? "#1A1A1A" : "white"
 		clip: true
 		
@@ -953,7 +967,7 @@ WAPage {
 
             WAMenuItem{
 				id: profileMenuItem
-				visible: conversation_view.isGroup() && showContactDetails
+				visible: conversation_view.isGroup() // && showContactDetails
 				height: visible ? 80 : 0
                 text: qsTr("View contact profile")
                 onClicked:{

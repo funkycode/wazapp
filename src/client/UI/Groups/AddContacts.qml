@@ -360,7 +360,7 @@ WAPage {
 				for (var i=0; i<list_view1.count; ++i) {
 					list_view1.currentIndex = i
 					if (list_view1.currentItem.isSelected) {
-						//console.log("ADDING CONTACT: "+list_view1.currentItem.jid)
+						consoleDebug("ADDING CONTACT: "+list_view1.currentItem.jid)
 
 						if (selectedContacts.indexOf(contactsModel.get(i).jid)<0) {
 							selectedContacts = selectedContacts + (selectedContacts!==""? ",":"") + contactsModel.get(i).jid;

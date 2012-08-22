@@ -22,7 +22,6 @@
 import QtQuick 1.1
 import com.nokia.meego 1.0
 import QtMobility.gallery 1.1
-import QtMobility.contacts 1.1
 
 import "Chats"
 import "common"
@@ -60,8 +59,11 @@ WAStackWindow {
 	property bool sendWithEnterKey
 	property string selectedPicture
 	property string selectedContactName: ""
+	property string selectedGroupPicture
 
     /****** Signal and Slot definitions *******/
+
+	signal consoleDebug(string text);
 
 	signal statusChanged();
     signal changeStatus(string new_status)
@@ -98,9 +100,12 @@ WAStackWindow {
 	signal onPictureUpdated(string ujid);
 	signal setPicture(string jid, string file);
 	signal sendMediaMessage(string jid, string url);
+	signal sendMediaFile(string file);
     signal sendLocation(string jid, string latitude, string longitude, string rotate);
     signal sendVCard(string jid, string contact);
 	signal removeSingleContact(string jid);
+
+	signal setBlockedContacts(string contacts);
 
 	signal selectedMedia(string url);
 	property string currentJid: ""
@@ -165,7 +170,7 @@ WAStackWindow {
     }
 
     function setActiveConv(activeJid){
-        console.log("SETTING ACTIVE CONV "+activeJid)
+        consoleDebug("SETTING ACTIVE CONV "+activeJid)
         activeConvJId=activeJid
     }
 
@@ -205,7 +210,7 @@ WAStackWindow {
         /*@@TODO: invalid way and should be removed. When a contact changes, only that changed contact should be synced silently
                 and UI gets updated silently as well.**/
 		if (updateContactsOpenend==false) {
-		console.log("CONTACTS CHANGED!!!");
+		consoleDebug("CONTACTS CHANGED!!!");
 			updateContactsOpenend = true
 			//updateContacts.open()  UI crashes with this, needs more work
 		}
@@ -255,15 +260,36 @@ WAStackWindow {
 	property string myAccount
 	function setMyAccount(account) {
 		myAccount = account
+
+		blockedContacts = MySettings.getSetting("BlockedContacts", "")
+		setBlockedContacts(blockedContacts)
 	}
 
 	function getPictures() {
 		var list;
     	for(var i =0; i<contactsModel.count; i++) {
 			list = list + (list!==""? ",":"") + contactsModel.get(i).jid;
-			console.log("ADDING TO LIST: " + contactsModel.get(i).jid)
+			consoleDebug("ADDING TO LIST: " + contactsModel.get(i).jid)
 		}
 		getPictureIds(list)
+	}
+
+
+	property variant blockedContacts: ""
+
+	function blockContact(jid) {
+		blockedContacts = blockedContacts + (blockedContacts!==""? ",":"") + jid;
+		MySettings.setSetting("BlockedContacts", blockedContacts)
+		setBlockedContacts(blockedContacts)
+	}
+
+	function unblockContact(jid) {
+		var newc = blockedContacts
+		newc = newc.replace(jid,"")
+		newc = newc.replace(",,",",")
+		blockedContacts = newc
+		MySettings.setSetting("BlockedContacts", blockedContacts)
+		setBlockedContacts(blockedContacts)
 	}
 
 
@@ -271,6 +297,15 @@ WAStackWindow {
         waContacts.pushContacts(contacts)
     }
 
+    function pushPhoneContacts(contacts){
+        phoneContactsModel.clear()
+		consoleDebug("APPENDING CONTACTS:" + contacts.length)
+		for (var i=0; i<contacts.length; i++) {
+			//consoleDebug("APPENDING CONTACT:" + contacts[i][2])
+			phoneContactsModel.insert(phoneContactsModel.count,{"name":contacts[i][0], 
+									 "picture":contacts[i][1], "numbers":contacts[i][2].toString()})
+		}
+    }
 
     function onContactsSyncStatusChanged(s) {
         switch(s){
@@ -286,7 +321,7 @@ WAStackWindow {
     }
 
     function openConversation(jid){
-          console.log("should open chat window with "+jid)
+          consoleDebug("should open chat window with "+jid)
 
           var conversation = waChats.getOrCreateConversation(jid);
           conversation.open();
@@ -297,29 +332,29 @@ WAStackWindow {
 
     function conversationReady(conv){
         //This should be called if and only if conversation start point is backend
-        console.log("Got a conv in conversationReady slot: " + conv.jid);
+        consoleDebug("Got a conv in conversationReady slot: " + conv.jid);
         var conversation = waChats.getOrCreateConversation(conv.jid);
 
         var contact;
 
         if(conversation.isGroup()) {
-            console.log("SUBJET IS "+conv.subject);
+            consoleDebug("SUBJET IS "+conv.subject);
             conversation.subject = conv.subject || "";
             conversation.groupIcon = conv.picture || "";
-            console.log("Picture is "+conv.picture );
+            consoleDebug("Picture is "+conv.picture );
 
-            for(var i=0; i<conv.contacts.length; i++) {
-                console.log("ADDING CONTACT TO GROUP CONV");
+            /*for(var i=0; i<conv.contacts.length; i++) {
+                consoleDebug("ADDING CONTACT TO GROUP CONV");
                 contact = waContacts.getOrCreateContact({jid:conv.contacts[i].jid});
                 conversation.addContact(contact);
-                console.log("ADDED");
-            }
+                consoleDebug("ADDED");
+            }*/
         } else {
 
-            console.log("Finding appropriate contact");
+            consoleDebug("Finding appropriate contact");
             contact = waContacts.getOrCreateContact({jid:conv.jid});
             conversation.addContact(contact);
-            console.log("Binding conversation to contact");
+            consoleDebug("Binding conversation to contact");
             contact.setConversation(conversation);
 
         }
@@ -330,21 +365,21 @@ WAStackWindow {
     }
 
     function messagesReady(messages){
-        console.log("GOT MESSAGES SIGNAL");
+        consoleDebug("GOT MESSAGES SIGNAL");
         var conversation = waChats.getConversation(messages.jid);
-        console.log("proceed to check validity of conv")
+        consoleDebug("proceed to check validity of conv")
         if(!conversation){
-            console.log("FATAL UI ERROR, HOW COME CONV IS NOT HERE?!!");
+            consoleDebug("FATAL UI ERROR, HOW COME CONV IS NOT HERE?!!");
             appWindow.quitInit();
         }
 
         conversation.unreadCount=messages.conversation.unreadCount?messages.conversation.unreadCount:0;
         conversation.remainingMessagesCount = messages.conversation.remainingMessagesCount;
 
-        console.log("Adding messages to conv")
+        consoleDebug("Adding messages to conv")
         for (var i =0; i< messages.data.length; i++)
         {
-            //console.log("adding a message");
+            //consoleDebug("adding a message");
             conversation.addMessage(messages.data[i]);
         }
 
@@ -416,7 +451,7 @@ WAStackWindow {
 
         /**** Media ****/
     function onMediaTransferSuccess(jid,message_id,mediaObject){
-        console.log("Caught media transfer success in main")
+        consoleDebug("Caught media transfer success in main")
         var conversation = waChats.getConversation(jid);
 
         if(conversation)
@@ -424,7 +459,7 @@ WAStackWindow {
     }
 
     function onMediaTransferError(jid,message_id,mediaObject){
-        console.log("ERROR!! "+jid)
+        consoleDebug("ERROR!! "+jid)
         var conversation = waChats.getConversation(jid);
 
         if(conversation)
@@ -432,7 +467,7 @@ WAStackWindow {
     }
 
     function onMediaTransferProgressUpdated(progress,jid,message_id){
-        console.log("UPDATED PROGRESS "+progress)
+        consoleDebug("UPDATED PROGRESS "+progress)
         var conversation = waChats.getConversation(jid);
 
         if(conversation)
@@ -459,10 +494,15 @@ WAStackWindow {
         id:contactsModel
     }
 
+    ListModel{
+        id:phoneContactsModel
+    }
+
 	property variant selectedContacts: ""
 	ListModel {
 		id: participantsModel
 	}
+
 
 	DocumentGalleryModel {
 		id: galleryModel
@@ -470,38 +510,6 @@ WAStackWindow {
 		properties: [ "url", "fileName" ]
 		sortProperties: [ "fileName" ] 
 	}
-
-	ContactModel {
-        id: selContactsModel
-		Component.onCompleted: fast.listViewChanged()
-        sortOrders: [
-            /*SortOrder {
-                detail: ContactDetail.Organization
-                field: Organization.Name
-                direction: Qt.AscendingOrder
-            },*/
-            SortOrder {
-                detail: ContactDetail.DisplayLabel
-                field: DisplayLabel
-                direction: Qt.AscendingOrder
-            }
-        ]
-        filter: DetailFilter {
-            detail: ContactDetail.PhoneNumber
-            field: PhoneNumber.PhoneNumber
-        }
-    }
-
-
-	/*signal contactsAtStart();
-	signal contactsSetFocus();
-	signal onShowSearchBar();
-	property bool searBarVisible: false
-	property string searchFilter: ""
-	ContactsList { 
-		id: myContacts
-		visible: false
-	}*/
 
 
     WAPage {

@@ -21,7 +21,6 @@
 ****************************************************************************/
 import QtQuick 1.1
 import com.nokia.meego 1.0
-import QtMobility.contacts 1.1
 
 import "../common"
 import "../Contacts"
@@ -87,21 +86,6 @@ WAPage {
         }
     }
 
-	/*ContactModel {
-        id: selContactsModel
-		Component.onCompleted: fast.listViewChanged()
-        sortOrders: [
-            SortOrder {
-                detail:ContactDetail.DisplayLabel
-                field:DisplayLabel
-                direction:Qt.AscendingOrder
-            }
-        ]
-        filter: DetailFilter {
-            detail: ContactDetail.PhoneNumber
-            field: PhoneNumber.PhoneNumber
-        }
-    }*/
 	
     Component{
         id:myDelegate
@@ -109,15 +93,13 @@ WAPage {
         Rectangle
 		{
 			property variant myData: model
-			property bool filtered: displayLabel.match(new RegExp(searchInput.text,"i")) != null
+			property bool filtered: model.name.match(new RegExp(searchInput.text,"i")) != null
 
-			property string contactName: displayLabel
-			property string showContactName: searchInput.text.length>0 ? replaceText(displayLabel, searchInput.text) : displayLabel
-			property string contactID: contactId
-			property string picture: avatar.imageUrl.toString() !== "" ? 
-											avatar.imageUrl : "../common/images/user.png"
+			property string contactName: model.name
+			property string showContactName: searchInput.text.length>0 ? replaceText(model.name, searchInput.text) : model.name
+			property string picture: model.picture !== "" ? model.picture : "../common/images/user.png"
 
-			property bool isSelected: selectedContacts.indexOf(contactID)>-1
+			property bool isSelected: selectedContacts.indexOf(contactName)>-1
 
 			height: filtered ? 80 : 0
 			width: appWindow.inPortrait? 480:854
@@ -153,16 +135,6 @@ WAPage {
 					width: parent.width -56
 					font.bold: true
 				}
-				/*Label{
-				    id: contact_number
-		            text: isSelected? "TRUE" : "FALSE"
-				    font.pixelSize: 20
-				    color: "gray"
-					width: parent.width -56
-					elide: Text.ElideRight
-					height: 24
-					clip: true
-			   }*/
 
 		    }
 
@@ -178,19 +150,19 @@ WAPage {
 				id:mouseArea
 				anchors.fill: parent
 				onClicked:{
-					console.log("SELECTED OLD:" +selectedContacts)
+					consoleDebug("SELECTED OLD:" +selectedContacts)
 				    if (isSelected) {
-						console.log("REMOVING "+contactID)
+						consoleDebug("REMOVING "+contactName)
 						var newc = selectedContacts
-						newc = newc.replace(contactID,"")
+						newc = newc.replace(contactName,"")
 						newc = newc.replace(",,",",")
 						selectedContacts = newc
 						total = total -1
 					} else {
-						selectedContacts = selectedContacts + (selectedContacts!==""? ",":"") + contactID;
+						selectedContacts = selectedContacts + (selectedContacts!==""? ",":"") + contactName;
 						total = total +1
 					}
-					console.log("SELECTED NEW:" +selectedContacts)
+					consoleDebug("SELECTED NEW:" +selectedContacts)
 				}
 			}
 
@@ -308,7 +280,7 @@ WAPage {
             id: list_view1
 			anchors.fill: parent
             clip: true
-            model: selContactsModel.contacts
+            model: phoneContactsModel
             delegate: myDelegate
             spacing: 1
 			cacheBuffer: 30000
@@ -367,7 +339,7 @@ WAPage {
 					for (var i=0; i<list_view1.count; ++i) {
 						list_view1.currentIndex = i
 						//list_view1.currentItem.isSelected = true
-						selectedContacts = selectedContacts + (selectedContacts!==""? ",":"") + list_view1.currentItem.contactID;
+						selectedContacts = selectedContacts + (selectedContacts!==""? ",":"") + list_view1.currentItem.contactName;
 					}
 				} else {
 					selectedContacts = ""
@@ -386,14 +358,10 @@ WAPage {
 				for (var i=0; i<list_view1.count; ++i) {
 					list_view1.currentIndex = i
 					if (list_view1.currentItem.isSelected) {
-		                for ( var j=selContactsModel.contacts[i].phoneNumbers.length-1; j>=0; --j )
-		                {
-							//console.log("ADDING CONTACT: " + selContactsModel.contacts[i].phoneNumbers[j].number)
-		                    selected = selected + (selected!==""? ",":"") + selContactsModel.contacts[i].phoneNumbers[j].number
-		                }
+		                selected = selected + (selected!==""? ",":"") + list_view1.currentItem.myData.numbers
 					}
 				}
-				//console.log("SELECTED CONTACTS:" + selected);
+				//consoleDebug("SELECTED CONTACTS:" + selected);
 				pageStack.replace(loadingPage);
 				appWindow.refreshContacts(selected)
 			}

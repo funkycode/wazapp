@@ -21,7 +21,7 @@
 ****************************************************************************/
 import QtQuick 1.1
 import com.nokia.meego 1.0
-import QtMobility.contacts 1.1
+//import QtMobility.contacts 1.1
 
 import "../common"
 import "../Contacts"
@@ -87,23 +87,7 @@ WAPage {
         }
     }
 
-	/*ContactModel {
-        id: selContactsModel
-		Component.onCompleted: fast.listViewChanged()
-        sortOrders: [
-            SortOrder {
-                detail: ContactDetail.DisplayLabel
-                field: DisplayLabel
-                direction: Qt.AscendingOrder
-            }
-        ]
-        filter: DetailFilter {
-            detail: ContactDetail.PhoneNumber
-            field: PhoneNumber.PhoneNumber
-        }
-    }*/
-
-	ContactModel {
+/*	ContactModel {
         id: selectedContactModel
 		sortOrders: [
             SortOrder {
@@ -136,7 +120,7 @@ WAPage {
 				pageStack.pop()
 			}
 		}
-    }
+    }*/
 
 	
     Component{
@@ -145,13 +129,11 @@ WAPage {
         Rectangle
 		{
 			property variant myData: model
-			property bool filtered: displayLabel.match(new RegExp(searchInput.text,"i")) != null
+			property bool filtered: model.name.match(new RegExp(searchInput.text,"i")) != null
 
-			property string contactName: displayLabel
-			property string showContactName: searchInput.text.length>0 ? replaceText(displayLabel, searchInput.text) : displayLabel
-			property string contactID: contactId
-			property string picture: avatar.imageUrl.toString() !== "" ? 
-											avatar.imageUrl : "../common/images/user.png"
+			property string contactName: model.name
+			property string showContactName: searchInput.text.length>0 ? replaceText(model.name, searchInput.text) : model.name
+			property string picture: model.picture !== "" ? model.picture : "../common/images/user.png"
 
 			height: filtered ? 80 : 0
 			width: appWindow.inPortrait? 480:854
@@ -193,8 +175,10 @@ WAPage {
 				id:mouseArea
 				anchors.fill: parent
 				onClicked: { 
-					selectedContactNumber = phoneNumbers[0].number
-					selectedContactName = displayLabel
+					//selectedContactNumber = model.numbers.split(',')[0]
+					//selectedContactName = model.name
+					sendVCard(currentJid,model.name)
+					pageStack.pop()
 				}
 			}
 
@@ -313,7 +297,7 @@ WAPage {
             id: list_view1
 			anchors.fill: parent
             clip: true
-            model: selContactsModel.contacts
+            model: phoneContactsModel
             delegate: myDelegate
             spacing: 1
 			cacheBuffer: 30000

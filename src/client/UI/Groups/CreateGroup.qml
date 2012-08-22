@@ -34,6 +34,7 @@ WAPage {
 	signal emojiSelected(string emojiCode);
 
     Component.onCompleted: {
+		selectedGroupPicture = "/opt/waxmppplugin/bin/wazapp/UI/common/images/group.png"
         status_text.forceActiveFocus();
 		participantsModel.clear()
     }
@@ -61,7 +62,7 @@ WAPage {
 	Connections {
 		target: content
 		onEmojiSelected: {
-		    console.log("GOT EMOJI "+emojiCode);
+		    consoleDebug("GOT EMOJI "+emojiCode);
 
 		   	var str = cleanText(status_text.text)
 			var pos = str.indexOf("&quot;")
@@ -150,7 +151,7 @@ WAPage {
 					id: bcArea
 					anchors.fill: parent
 					onClicked: {
-						console.log("REMOVING " +contactJid)
+						consoleDebug("REMOVING " +contactJid)
 						participantsModel.remove(cindex)
 						var newSelectedContacts = selectedContacts
 						newSelectedContacts = newSelectedContacts.replace(contactJid,"")
@@ -179,6 +180,39 @@ WAPage {
 				height: 73
 			}
 
+			Row {
+				width: parent.width
+				height: 80
+				spacing: 10
+				x: 16
+
+				RoundedImage {
+					id: picture
+					size: 80
+					height: size
+					width: size
+					imgsource: selectedGroupPicture
+				}
+
+				Button {
+					id: picButton
+					height: 50
+					width: parent.width -32 - 90
+					anchors.verticalCenter: parent.verticalCenter
+					font.pixelSize: 22
+					text: qsTr("Select picture")
+					onClicked: pageStack.push (Qt.resolvedUrl("SelectPicture.qml"))
+				}
+
+
+
+			}
+
+			Separator {
+				x: 16
+				width:parent.width -32
+			}
+
 		    Label {
 				x: 16
 		        color: theme.inverted ? "white" : "black"
@@ -194,7 +228,7 @@ WAPage {
 				textColor: "black"
 				/*onActiveFocusChanged: { 
 					lastPosition = status_text.cursorPosition 
-					console.log("LAST POSITION: " + lastPosition)
+					consoleDebug("LAST POSITION: " + lastPosition)
 				}*/
 			}
 
@@ -326,7 +360,7 @@ WAPage {
 					if (participantsModel.get(i).contactJid)
 						participants = participants + (participants!==""? ",":"") + participantsModel.get(i).contactJid;
 				}
-				console.log("NOW ADD PARTICIPANTS: " + participants)
+				consoleDebug("NOW ADD PARTICIPANTS: " + participants)
 				groupId = "5491133302246-1342011766@g.us"
 				addParticipants(groupId,participants)*/
 			}
@@ -341,12 +375,17 @@ WAPage {
 	Connections {
 		target: appWindow
 		onGroupCreated: {
-			var participants;
-			for (var i=0; i<participantsModel.count; ++i) {
-				if (participantsModel.get(i).contactJid!="undefined")
-					participants = participants + (participants!==""? ",":"") + participantsModel.get(i).contactJid;
+			setPicture(groupId, selectedGroupPicture)
+		}
+		onOnPictureUpdated: {
+			if (groupId == ujid) {
+				var participants;
+				for (var i=0; i<participantsModel.count; ++i) {
+					if (participantsModel.get(i).contactJid!="undefined")
+						participants = participants + (participants!==""? ",":"") + participantsModel.get(i).contactJid;
+				}
+				addParticipants(groupId,participants)
 			}
-			addParticipants(groupId,participants)
 		}
 		onAddedParticipants: {
 			//pageStack.pop()

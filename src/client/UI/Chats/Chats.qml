@@ -45,14 +45,14 @@ WAPage {
         if(conversation)
             return conversation;
 
-        console.log("CONV: NOT FOUND")
+        consoleDebug("CONV: NOT FOUND")
         conversation = new Components.Conversation(appWindow).view;
         conversation.jid = jid;
 
-        //console.log("APPENDING");
+        //consoleDebug("APPENDING");
         conversationsModel.append({conversation:conversation})
 
-        //console.log("RETURNING")
+        //consoleDebug("RETURNING")
         return conversation;
     }
 
@@ -60,7 +60,7 @@ WAPage {
 
     function getConversation(jid){
 
-        //console.log("FIND");
+        //consoleDebug("FIND");
         var conversation = findConversation(jid);
         if(conversation)
             return conversation;
@@ -70,7 +70,7 @@ WAPage {
     function removeChatItem(jid){
 
         var chatItemIndex = findChatIem(jid);
-        console.log("deleting")
+        consoleDebug("deleting")
         if(chatItemIndex >= 0){
             var conversation = conversationsModel.get(chatItemIndex).conversation;
             var contacts = conversation.getContacts();

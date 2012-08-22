@@ -81,8 +81,9 @@ WAPage {
 
 		delegate: Image {
 			source: "/home/user/.thumbnails/grid/" + Qt.md5(url) + ".jpeg"
-			width: 160
-			height: 160
+			width: 158
+			height: 158
+			smooth: true
 
 			Rectangle {
 				id: rec

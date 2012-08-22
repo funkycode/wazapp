@@ -24,6 +24,7 @@ from PySide.QtDeclarative import QDeclarativeView,QDeclarativeProperty
 from QtMobility.Messaging import *
 from contacts import WAContacts
 from status import WAChangeStatus
+from mediaupload import WAMediaUpload
 from waxmpp import WAXMPP
 from utilities import Utilities
 #from registration import Registration
@@ -74,12 +75,14 @@ class WAUI(QDeclarativeView):
 		self.rootObject().refreshContacts.connect(self.c.resync)
 		self.rootObject().sendSMS.connect(self.sendSMS)
 		self.rootObject().makeCall.connect(self.makeCall)
+		self.rootObject().sendVCard.connect(self.sendVCard)
+		self.rootObject().consoleDebug.connect(self.consoleDebug)
 		
 				
 		#Changed by Tarek: connected directly to QContactManager living inside contacts manager
-		self.c.manager.manager.contactsChanged.connect(self.rootObject().onContactsChanged);
-		self.c.manager.manager.contactsAdded.connect(self.rootObject().onContactsChanged);
-		self.c.manager.manager.contactsRemoved.connect(self.rootObject().onContactsChanged);
+		#self.c.manager.manager.contactsChanged.connect(self.rootObject().onContactsChanged);
+		#self.c.manager.manager.contactsAdded.connect(self.rootObject().onContactsChanged);
+		#self.c.manager.manager.contactsRemoved.connect(self.rootObject().onContactsChanged);
 
 
 		
@@ -151,6 +154,10 @@ class WAUI(QDeclarativeView):
 		#reg.start();
 		
 
+	def consoleDebug(self,text):
+		self._d(text);
+
+
 	def setMyAccount(self,account):
 		self.rootObject().setMyAccount(account)
 		self.account = account
@@ -171,10 +178,13 @@ class WAUI(QDeclarativeView):
 		bus = dbus.SystemBus()
 		csd_call = dbus.Interface(bus.get_object('com.nokia.csd', '/com/nokia/csd/call'), 'com.nokia.csd.Call')
 		csd_call.CreateWith(str(num), dbus.UInt32(0))
-		
+	
+	def sendVCard(self,jid,name):
+		self.c.exportContact(jid,name);
+	
 		
 	def updateContact(self, jid):
-		self._d("POPULATE");
+		self._d("POPULATE SINGLE");
 		self.c.updateContact(jid);
 	
 
@@ -184,7 +194,7 @@ class WAUI(QDeclarativeView):
 		#self.c.refreshing.connect(syncer.onRefreshing);
 		#syncer.done.connect(c.updateContacts);
 
-		self._d("POPULATE");
+		self._d("POPULATE CONTACTS");
 		contacts = self.c.getContacts();
 		self.rootObject().pushContacts(contacts);
 
@@ -195,6 +205,12 @@ class WAUI(QDeclarativeView):
 	def populateConversations(self):
 		self.messageStore.loadConversations()
 		
+
+	def populatePhoneContacts(self):
+		self._d("POPULATE PHONE CONTACTS");
+		contacts = self.c.getPhoneContacts();
+		self.rootObject().pushPhoneContacts(contacts);
+
 	
 	def login(self):
 		self.whatsapp.start();
@@ -237,6 +253,7 @@ class WAUI(QDeclarativeView):
 		whatsapp.setReceiptAckCapable(True);
 		whatsapp.setContactsManager(self.c);
 		
+		whatsapp.eventHandler.connected.connect(self.rootObject().onConnected);
 		whatsapp.eventHandler.typing.connect(self.rootObject().onTyping)
 		whatsapp.eventHandler.paused.connect(self.rootObject().onPaused)
 		whatsapp.eventHandler.showUI.connect(self.showUI)
@@ -244,7 +261,6 @@ class WAUI(QDeclarativeView):
 		whatsapp.eventHandler.messageDelivered.connect(self.rootObject().onMessageDelivered);
 		whatsapp.eventHandler.connecting.connect(self.rootObject().onConnecting);
 		whatsapp.eventHandler.loginFailed.connect(self.rootObject().onLoginFailed);
-		whatsapp.eventHandler.connected.connect(self.rootObject().onConnected);
 		whatsapp.eventHandler.sleeping.connect(self.rootObject().onSleeping);
 		whatsapp.eventHandler.disconnected.connect(self.rootObject().onDisconnected);
 		whatsapp.eventHandler.available.connect(self.rootObject().onAvailable);
@@ -293,8 +309,10 @@ class WAUI(QDeclarativeView):
 		self.rootObject().setPicture.connect(whatsapp.eventHandler.setPicture)
 		self.rootObject().sendMediaMessage.connect(whatsapp.eventHandler.sendMediaMessage)
 		self.rootObject().sendLocation.connect(whatsapp.eventHandler.sendLocation)
-		self.rootObject().sendVCard.connect(whatsapp.eventHandler.sendVCard)
+		#self.rootObject().sendVCard.connect(whatsapp.eventHandler.sendVCard)
+		self.c.contactExported.connect(whatsapp.eventHandler.sendVCard)
 
+		self.rootObject().setBlockedContacts.connect(whatsapp.eventHandler.setBlockedContacts)
 
 		#self.reg = Registration();
 		self.whatsapp = whatsapp;
@@ -302,6 +320,10 @@ class WAUI(QDeclarativeView):
 		#change whatsapp status
 		self.cs = WAChangeStatus(self.store);
 		self.rootObject().changeStatus.connect(self.cs.sync)
+
+		self.uf = WAMediaUpload(self.store);
+		self.rootObject().sendMediaFile.connect(self.uf.upload)
+		
 		
 		#print "el acks:"
 		#print whatsapp.supports_receipt_acks
