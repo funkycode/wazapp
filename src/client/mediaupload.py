@@ -26,18 +26,18 @@ class WAMediaUpload(WAMediaUploader):
 
 	def __init__(self,store):
 		self.store = store;
-		self.base_url = "htts://mms.whatsapp.net/";
-		self.req_file = "client/iphone/upload.php";
+		self.base_url = "mms.whatsapp.net";
+		self.req_file = "/client/iphone/upload.php";
 		super(WAMediaUpload,self).__init__();
 
-	def upload(self, image):
+	def upload(self, image, name):
 		print "TRYING TO UPLOAD FILE..." + image;
 		'''self.clearParams();
 		self.addParam("me",self.store.account.phoneNumber);
 		self.addParam("s",msg)
 		self.addParam("cc","31")
 		data = self.sendRequest();'''
-		data = self.sendRequest(image);
+		data = self.sendRequest(image, name);
 		self.exit();
 
 		

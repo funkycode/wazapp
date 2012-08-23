@@ -100,7 +100,7 @@ WAStackWindow {
 	signal onPictureUpdated(string ujid);
 	signal setPicture(string jid, string file);
 	signal sendMediaMessage(string jid, string url);
-	signal sendMediaFile(string file);
+	signal sendMediaFile(string file, string name);
     signal sendLocation(string jid, string latitude, string longitude, string rotate);
     signal sendVCard(string jid, string contact);
 	signal removeSingleContact(string jid);

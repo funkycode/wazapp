@@ -109,7 +109,7 @@ WAPage {
 	            id: mouseArea
 	            anchors.fill: parent
 	            onClicked: {
-	                selectedMedia(decodeURIComponent(url))
+					sendMediaFile(decodeURIComponent(url), fileName)
 					pageStack.pop()
 	            }
 	        }

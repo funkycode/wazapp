@@ -874,7 +874,7 @@ WAPage {
 		    id: location_button
 		    width:50
 		    height:50
-            iconSource: "../common/images/location.png"
+            iconSource: theme.inverted ? "../common/images/location-white.png" : "../common/images/location.png"
 		    anchors.left: emoji_button.right
 			anchors.leftMargin: 16
 		    anchors.verticalCenter: send_button.verticalCenter
@@ -888,14 +888,101 @@ WAPage {
 		    id: vcard_button
 		    width:50
 		    height:50
-            iconSource: "../common/images/contact.png"
+            iconSource: theme.inverted? "../common/images/contact-white.png" : "../common/images/contact.png"
 		    anchors.left: location_button.right
 			anchors.leftMargin: 16
 		    anchors.verticalCenter: send_button.verticalCenter
             onClicked: {
 				selectedContactName = ""
                 pageStack.push (Qt.resolvedUrl("../Contacts/ShareContact.qml"))
+				if (mediaContentSlip.width > 48) mediaContentSlipOff.start();
 		    }
+		}
+
+
+		Rectangle {
+			id: mediaContentSlip
+			width: 48
+			radius: 23
+			height: 46
+			color: "gray"
+			anchors.left: vcard_button.right
+			anchors.leftMargin: 17
+			anchors.verticalCenter: send_button.verticalCenter
+
+			Button {
+				id: media_button
+				anchors.left: parent.left
+				anchors.leftMargin: -1
+				anchors.verticalCenter: parent.verticalCenter
+				width: 50
+				height: width
+			
+				iconSource: theme.inverted ? "../common/images/attachment-white.png" : "../common/images/attachment.png"
+				onClicked: {
+					forceFocusToChatText();
+					if ( mediaContentSlip.width == 48 ) {
+						mediaContentSlipOn.start();
+					} else {
+						mediaContentSlipOff.start();
+					}
+					forceFocusToChatText();
+				}
+ 
+				SequentialAnimation {
+					id: mediaContentSlipOn;
+					NumberAnimation { target: mediaContentSlip; property: "width"; from: 48; to: 216; duration: 125; easing.type: Easing.InCubic }
+				}
+ 
+				SequentialAnimation {
+					id: mediaContentSlipOff;
+					NumberAnimation { target: mediaContentSlip; property: "width"; from: 216; to: 48; duration: 125; easing.type: Easing.OutCubic }
+				}
+			}
+
+			Button {
+	    		id: image_button
+	    		iconSource: theme.inverted ? "../common/images/image-white.png" : "../common/images/image.png"
+	    		width: mediaContentSlip.width == 216 ? 44 : 0
+				visible: width == 44 ? true : false
+	    		height: width
+	    		anchors.right: video_button.left
+	    		anchors.rightMargin: 10
+	    		anchors.verticalCenter: parent.verticalCenter
+	    		onClicked: {
+					pageStack.push (Qt.resolvedUrl("SendPicture.qml"))
+					mediaContentSlipOff.start();
+				}		
+			}	
+			Button {
+				id: video_button
+				iconSource: theme.inverted ? "../common/images/video-white.png" : "../common/images/video.png"
+	    		width: mediaContentSlip.width == 216 ? 44 : 0
+				visible: width == 44 ? true : false
+	    		height: width
+	    		anchors.right: audio_button.left
+	    		anchors.rightMargin: 10
+	    		anchors.verticalCenter: parent.verticalCenter
+	    		onClicked: {
+					console.log("DBUS CALL TO VIDEO LIST")
+					mediaContentSlipOff.start();
+				}
+			}
+			Button {
+				id: audio_button
+				iconSource: theme.inverted ? "../common/images/audio-white.png" : "../common/images/audio.png"
+	    		width: mediaContentSlip.width == 216 ? 44 : 0
+				visible: width == 44 ? true : false
+	    		height: width
+	    		anchors.right: parent.right
+	    		anchors.rightMargin: 2
+	    		anchors.verticalCenter: parent.verticalCenter
+				onClicked: {
+					console.log("DBUS CALL TO AUDIO LIST")
+					mediaContentSlipOff.start();
+				}
+			}
+		
 		}
 
 
@@ -917,6 +1004,7 @@ WAPage {
 		Button
 		{
 		    id:send_button
+			visible: (mediaContentSlip.width > 48 ? false : (!sendWithEnterKey))
 		    platformStyle: ButtonStyle { inverted: true }
 		    width:160
 		    height:50

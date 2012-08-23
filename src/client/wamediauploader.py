@@ -62,20 +62,20 @@ class WAMediaUploader(QThread):
 		return  self.base_url+self.req_file;
 
 	def getUserAgent(self):
-		#agent = "WhatsApp/1.2 S40Version/microedition.platform";
-		agent = "WhatsApp/2.6.7 iPhone_OS/5.0.1 Device/Unknown_(iPhone4,1)";
+		agent = "WhatsApp/1.2 S40Version/microedition.platform";
+		#agent = "WhatsApp/2.6.7 iPhone_OS/5.0.1 Device/Unknown_(iPhone4,1)";
 		return agent;	
 	
 	
 
-	def sendRequest(self, image):
-		
+	def sendRequest(self, image, name):
+		image = image.replace("file://","")
 		self.params =  [param.items()[0] for param in self.params];
 		
 		params = urllib.urlencode(self.params);
 		
 		print "Opening connection to "+self.base_url;
-		self.conn = httplib.HTTPSConnection(self.base_url,443);
+		#self.conn = httplib.HTTPSConnection(self.base_url,443);
 		'''headers = {"User-Agent":self.getUserAgent(),
 			"Content-Type":"application/x-www-form-urlencoded",
 			"Accept":"*/*",
@@ -86,17 +86,21 @@ class WAMediaUploader(QThread):
 		print headers;
 		print params;'''
 
-		#print "Uploading "+image;
-		datagen, headers = multipart_encode({"image1": open(image, "rb")})
-		#request = urllib2.Request("htts://mms.whatsapp.net/client/iphone/upload.php", datagen, headers)
-		#print urllib2.urlopen(request).read()
+		print "Uploading "+image;
+		datagen, headers = multipart_encode(name,{"file": open(image, "rb")})
+		
+		print datagen;
+		print headers;
+
+		request = urllib2.Request("https://mms.whatsapp.net/client/iphone/upload.php", datagen, headers)
+		print urllib2.urlopen(request).read()
 
 		
-		self.conn.request("POST",self.req_file,datagen,headers);
+		'''self.conn.request("POST",self.req_file,datagen,headers);
 		resp=self.conn.getresponse()
  		response=resp.read();
  		self._d(response);
  		self.done.emit(response);
- 		return response;
+ 		return response;'''
 
 
