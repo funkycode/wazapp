@@ -628,7 +628,7 @@ class WAEventHandler(WAEventBase):
 		self._d("SHOW UI for "+jid)
 		self.showUI.emit(jid);
 
-	def message_received(self,fmsg,duplicate = False):
+	def message_received(self,fmsg,duplicate=False,mtype=""):
 		msg_type = "duplicate" if duplicate else "new";
 
 		if fmsg.content is not None:
@@ -676,7 +676,7 @@ class WAEventHandler(WAEventBase):
 		#	self.conn.sendGetPicture(conversation.jid,"image")
 
 		if(fmsg.wantsReceipt):
-			self.conn.sendMessageReceived(fmsg);
+			self.conn.sendMessageReceived(fmsg.key.remote_jid,mtype,msg.key.id);
 
 	
 		
@@ -788,6 +788,8 @@ class WAEventHandler(WAEventBase):
 		self._d("Getting Picture "+res +" for "+jid)
 		if res == "done":
 			self.conn.sendGetPicture(jid,"image")
+		else:
+			self.profilePictureUpdated.emit(jid);
 
 class StanzaReader(QThread):
 	def __init__(self,connection):
@@ -1172,6 +1174,11 @@ class StanzaReader(QThread):
 
 			pictureUpdated = messageNode.getChild("notification").getAttributeValue("type");
 
+			wr = None
+			wr = messageNode.getChild("request").getAttributeValue("xmlns");
+			if wr == "urn:xmpp:receipts":
+				self.connection.sendMessageReceived(fromAttribute,"notification",msg_id);
+
 			if pictureUpdated == "picture":
 				print "GROUP PICTURE UPDATED!"
 				bodyNode = messageNode.getChild("notification").getChild("set");
@@ -1195,7 +1202,7 @@ class StanzaReader(QThread):
 
 				cont = False
 
-				if addSubject is not None and self.lastContactAddded != addSubject:
+				if addSubject is not None:
 					if addSubject == self.eventHandler.account:
 						print "THIS IS ME! GETTING OWNER..."
 						addSubject = fromAttribute.split('-')[0]+"@s.whatsapp.net"
@@ -1208,7 +1215,7 @@ class StanzaReader(QThread):
 					fmsg.setData({"status":0,"key":key.toString(),"content":addSubject,"type":20});
 					author = addSubject
 					cont = True
-				elif removeSubject is not None and self.lastContactRemoved != removeSubject:
+				elif removeSubject is not None:
 					if removeSubject == self.eventHandler.account:
 						print "THIS IS ME! GETTING OWNER..."
 						removeSubject = fromAttribute.split('-')[0]+"@s.whatsapp.net"
@@ -1253,7 +1260,7 @@ class StanzaReader(QThread):
 					duplicate = True;
 						
 				if signal:
-					self.eventHandler.message_received(fmsg,duplicate);
+					self.eventHandler.message_received(fmsg,duplicate,"notification");
 		
 		
 		elif typeAttribute == "subject":
@@ -1516,7 +1523,7 @@ class StanzaReader(QThread):
 						duplicate = True;
 				
 				if signal:
-					self.eventHandler.message_received(fmsg,duplicate);
+					self.eventHandler.message_received(fmsg,duplicate,"chat");
 			
 
 
@@ -1773,11 +1780,11 @@ class WAXMPP():
 		messageNode = self.getSubjectMessage(to,msg_id,receivedNode);
 		self.out.write(messageNode);
 
-	def sendMessageReceived(self,fmsg):
-		if not isinstance(fmsg.key, str):
-			receivedNode = ProtocolTreeNode("received",{"xmlns": "urn:xmpp:receipts"})
-			messageNode = ProtocolTreeNode("message",{"to":fmsg.key.remote_jid,"type":"chat","id":fmsg.key.id},[receivedNode]);
-			self.out.write(messageNode);
+	def sendMessageReceived(self,jid,mtype,mid):
+		print "sending message received to "+jid+" - type:"+mtype+" - id:"+mid
+		receivedNode = ProtocolTreeNode("received",{"xmlns": "urn:xmpp:receipts"})
+		messageNode = ProtocolTreeNode("message",{"to":jid,"type":mtype,"id":mid},[receivedNode]);
+		self.out.write(messageNode);
 
 
 	def sendDeliveredReceiptAck(self,to,msg_id):

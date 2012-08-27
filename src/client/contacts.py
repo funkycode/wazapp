@@ -155,11 +155,16 @@ class WAContacts(QObject):
 		
 		
 	def updateContact(self,jid):
+		if "@g.us" in jid:
+			user_img = QImage("/opt/waxmppplugin/bin/wazapp/UI/common/images/group.png")
+		else:
+			user_img = QImage("/opt/waxmppplugin/bin/wazapp/UI/common/images/user.png")
+
 		jname = jid.replace("@s.whatsapp.net","").replace("@g.us","")
-		user_img = QImage("/opt/waxmppplugin/bin/wazapp/UI/common/images/user.png")
 		user_img.save("/home/user/.cache/wazapp/contacts/" + jname + ".png", "PNG")
-		user_img = QImage("/home/user/.cache/wazapp/contacts/" + jname + ".jpg")
-		user_img.save("/home/user/.cache/wazapp/profile/" + jname + ".jpg", "JPEG")
+		if os.path.isfile("/home/user/.cache/wazapp/contacts/" + jname + ".jpg"):
+			user_img = QImage("/home/user/.cache/wazapp/contacts/" + jname + ".jpg")
+			user_img.save("/home/user/.cache/wazapp/profile/" + jname + ".jpg", "JPEG")
 		mask_img = QImage("/opt/waxmppplugin/bin/wazapp/UI/common/images/usermask.png")
 		preimg = QPixmap.fromImage(QImage(user_img.scaled(96, 96, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)));
 		PixmapToBeMasked = QImage(96, 96, QImage.Format_ARGB32_Premultiplied);
