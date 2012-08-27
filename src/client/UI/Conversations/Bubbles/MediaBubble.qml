@@ -100,7 +100,7 @@ SpeechBubble {
 
                 PropertyChanges {
                     target: operationButton
-                    visible: delegateContainer.from_me!=1
+                    //visible: delegateContainer.from_me!=1
                     enabled:true
                     text: delegateContainer.from_me==1? qsTr("Send"):qsTr("Download")
                 }
@@ -175,10 +175,13 @@ SpeechBubble {
             id:buttonsHolder
 
             width: openButton.visible? openButton.paintedWidth : 180
-            height:openButton.height
+            height: openButton.visible? openButton.height : 32
            // anchors.verticalCenter: msg_image.verticalCenter
-            anchors.right: parent.right
-            anchors.rightMargin: 66
+			anchors.left: from_me==1 ? parent.left : this.left
+			anchors.right: from_me? this.right : parent.right
+			anchors.leftMargin: from_me==1? 84 : 0
+            anchors.rightMargin: from_me==1? 0 : 66
+			//anchors.topMargin: operationButton.visible? 4 : 0
 
             Text {
                 id: openButton
@@ -192,7 +195,7 @@ SpeechBubble {
 				maximumLineCount: 2
 				anchors.left: from_me==1 ? parent.left : this.left
 				anchors.right: from_me? this.right : parent.right
-				anchors.leftMargin: from_me==1? 84 : 0
+				//anchors.leftMargin: from_me==1? 84 : 0
 				wrapMode: "WrapAtWordBoundaryOrAnywhere"
 				elide: Text.ElideRight
 				horizontalAlignment: from_me==1? Text.AlignLeft : Text.AlignRight
@@ -200,7 +203,7 @@ SpeechBubble {
 
             Button {
                 id: operationButton
-                visible:false
+                visible:state!="success"
 
                 width: parent.width
                 height: 38
@@ -208,18 +211,14 @@ SpeechBubble {
                 text: qsTr("Download")
 
                 onClicked: {
-                     operationButton.enabled=false
+					operationButton.enabled=false
                     operationButton.text= qsTr("Initializing")
 
                     if(delegateContainer.from_me==1)
                         uploadClicked()
                     else
                         downloadClicked()
-
-
                 }
-
-
             }
 
         }

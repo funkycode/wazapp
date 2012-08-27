@@ -29,6 +29,8 @@ import "Contacts"
 import "Menu"
 import "Updater"
 import "Settings"
+import "Conversations"
+import "Profile"
 import "common/js/settings.js" as MySettings
 
 //import com.nokia.extras 1.0
@@ -78,6 +80,8 @@ WAStackWindow {
     signal conversationActive(string jid);
     signal fetchMedia(int id);
     signal fetchGroupMedia(int id);
+    signal uploadMedia(int id);
+    signal uploadGroupMedia(int id);
     signal loadMessages(string jid, int offsetId, int limit);
     signal conversationOpened(string jid);
 	signal sendSMS(string num)
@@ -99,9 +103,11 @@ WAStackWindow {
 	signal getPicture(string jid, string type);
 	signal onPictureUpdated(string ujid);
 	signal setPicture(string jid, string file);
-	signal sendMediaMessage(string jid, string url);
-	signal sendMediaFile(string file, string name);
-    signal sendLocation(string jid, string latitude, string longitude, string rotate);
+	signal sendMediaMessage(string jid, string data, string image, string preview);
+	signal sendMediaImageFile(string jid, string file, string preview);
+	signal sendMediaVideoFile(string jid, string file);
+	signal sendMediaAudioFile(string jid, string file);
+	signal sendLocation(string jid, string latitude, string longitude, string rotate);
     signal sendVCard(string jid, string contact);
 	signal removeSingleContact(string jid);
 
@@ -146,6 +152,10 @@ WAStackWindow {
 	}
 
 	
+	function uploadResult(data, image, to, preview) {
+		if (data.indexOf("ERROR")==-1)
+			sendMediaMessage(to, data, image, preview)
+	}
 
     //prevent double opened, sometimes QContactsManager sends more than 1 signal
     property bool updateContactsOpenend: false
@@ -467,7 +477,7 @@ WAStackWindow {
     }
 
     function onMediaTransferProgressUpdated(progress,jid,message_id){
-        consoleDebug("UPDATED PROGRESS "+progress)
+        consoleDebug("UPDATED PROGRESS "+progress + " for " + jid)
         var conversation = waChats.getConversation(jid);
 
         if(conversation)
@@ -483,8 +493,28 @@ WAStackWindow {
     }
 
     Settings{
-        id:settingsPage;
+        id:settingsPage
     }
+
+	SendPicture {
+		id:sendPicture
+	}
+
+	SendVideo {
+		id:sendVideo
+	}
+
+	SendAudio {
+		id:sendAudio
+	}
+
+	SendAudioFile {
+		id:sendAudioFile
+	}
+
+	SelectPicture {
+		id:setProfilePicture
+	}
 
     LoadingPage{
         id:loadingPage
@@ -510,6 +540,37 @@ WAStackWindow {
 		properties: [ "url", "fileName" ]
 		sortProperties: [ "fileName" ] 
 	}
+
+	DocumentGalleryModel {
+		id: galleryVideoModel
+		rootType: DocumentGallery.Video
+		properties: [ "url", "fileName" ]
+		sortProperties: [ "fileName" ] 
+	}
+
+	DocumentGalleryModel {
+		id: galleryArtistModel
+		rootType: DocumentGallery.Album
+		properties: ["artist", "title"]
+		sortProperties: ["artist", "title"]
+	}
+
+
+	property string filterAlbum
+    DocumentGalleryModel {
+        id: galleryAudioModel
+        rootType: DocumentGallery.Audio
+        properties: ["url", "fileName", "title", "artist", "duration"]
+        sortProperties: ["+title"]
+		filter: GalleryFilterIntersection {
+            filters: [
+                GalleryEqualsFilter {
+                    property: "albumTitle"
+                    value: filterAlbum.replace("'","\\'")
+                }
+            ]
+		}
+   }
 
 
     WAPage {

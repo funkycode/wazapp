@@ -39,18 +39,18 @@ WAPage {
     }
 
 	WAHeader{
-        title: qsTr("Select picture")
+        title: qsTr("Select video")
         anchors.top:parent.top
         width:parent.width
 		height: 73
     }
 
 	Component.onCompleted: {
-		console.log("SELECT DIALOG OPENED")
-		galleryModel.filter = myFilters
+		//console.log("SELECT DIALOG OPENED")
+		//galleryVideoModel.filter = myFilters
 	}
 
-	GalleryFilterUnion {
+	/*GalleryFilterUnion {
 		id: myFilters
     	filters: [
 			GalleryWildcardFilter {
@@ -59,14 +59,10 @@ WAPage {
 			},
 			GalleryWildcardFilter {
 				property: "fileName";
-				value: "*.jpeg";
-			},
-			GalleryWildcardFilter {
-				property: "fileName";
 				value: "*.png";
 			}
 		]
-	}
+	}*/
 
 	GridView {
 		id: view
@@ -81,7 +77,7 @@ WAPage {
 	    pressDelay: 100
 	    maximumFlickVelocity: 3500
 
-		model: galleryModel
+		model: galleryVideoModel
 
 		delegate: Image {
 			source: "/home/user/.thumbnails/grid/" + Qt.md5(url) + ".jpeg"
@@ -113,7 +109,7 @@ WAPage {
 	            id: mouseArea
 	            anchors.fill: parent
 	            onClicked: {
-					sendMediaImageFile(currentJid, decodeURIComponent(url), "/home/user/.thumbnails/grid/" + Qt.md5(url) + ".jpeg")
+					sendMediaVideoFile(currentJid, decodeURIComponent(url))
 					pageStack.pop()
 	            }
 	        }

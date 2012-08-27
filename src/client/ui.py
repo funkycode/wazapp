@@ -24,7 +24,6 @@ from PySide.QtDeclarative import QDeclarativeView,QDeclarativeProperty
 from QtMobility.Messaging import *
 from contacts import WAContacts
 from status import WAChangeStatus
-from mediaupload import WAMediaUpload
 from waxmpp import WAXMPP
 from utilities import Utilities
 #from registration import Registration
@@ -297,6 +296,8 @@ class WAUI(QDeclarativeView):
 		self.rootObject().quit.connect(whatsapp.eventHandler.quit)
 		self.rootObject().fetchMedia.connect(whatsapp.eventHandler.fetchMedia)
 		self.rootObject().fetchGroupMedia.connect(whatsapp.eventHandler.fetchGroupMedia)
+		self.rootObject().uploadMedia.connect(whatsapp.eventHandler.uploadMedia)
+		self.rootObject().uploadGroupMedia.connect(whatsapp.eventHandler.uploadGroupMedia)
 		self.rootObject().getGroupInfo.connect(whatsapp.eventHandler.getGroupInfo)
 		self.rootObject().createGroupChat.connect(whatsapp.eventHandler.createGroupChat)
 		self.rootObject().addParticipants.connect(whatsapp.eventHandler.addParticipants)
@@ -307,6 +308,9 @@ class WAUI(QDeclarativeView):
 		self.rootObject().getPictureIds.connect(whatsapp.eventHandler.getPictureIds)
 		self.rootObject().getPicture.connect(whatsapp.eventHandler.getPicture)
 		self.rootObject().setPicture.connect(whatsapp.eventHandler.setPicture)
+		self.rootObject().sendMediaImageFile.connect(whatsapp.eventHandler.sendMediaImageFile)
+		self.rootObject().sendMediaVideoFile.connect(whatsapp.eventHandler.sendMediaVideoFile)
+		self.rootObject().sendMediaAudioFile.connect(whatsapp.eventHandler.sendMediaAudioFile)
 		self.rootObject().sendMediaMessage.connect(whatsapp.eventHandler.sendMediaMessage)
 		self.rootObject().sendLocation.connect(whatsapp.eventHandler.sendLocation)
 		#self.rootObject().sendVCard.connect(whatsapp.eventHandler.sendVCard)
@@ -321,9 +325,6 @@ class WAUI(QDeclarativeView):
 		self.cs = WAChangeStatus(self.store);
 		self.rootObject().changeStatus.connect(self.cs.sync)
 
-		self.uf = WAMediaUpload(self.store);
-		self.rootObject().sendMediaFile.connect(self.uf.upload)
-		
 		
 		#print "el acks:"
 		#print whatsapp.supports_receipt_acks

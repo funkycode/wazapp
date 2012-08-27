@@ -46,7 +46,6 @@ WAPage {
     }
 
 	Component.onCompleted: {
-		console.log("SELECT DIALOG OPENED")
 		galleryModel.filter = myFilters
 	}
 

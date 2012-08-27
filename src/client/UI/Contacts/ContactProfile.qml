@@ -75,150 +75,198 @@ WAPage {
 			if (profileUser == ujid) {
 				picture.imgsource = ""
 				picture.imgsource = contactPicture
+				bigImage.source = ""
+				bigImage.source = contactPicture.replace(".png",".jpg").replace("contacts","profile")
 			}
 		}	
 	}
 
+	Image {
+		id: bigImage
+		visible: false
+		source: contactPicture.replace(".png",".jpg").replace("contacts","profile")
+	}
 
-	Column {
-		anchors.fill: parent
-		anchors.leftMargin: 16
-		anchors.rightMargin: 16
+    Flickable {
+        id: flickArea
+        anchors.fill: parent
 		anchors.topMargin: 12
-		spacing: 12
+        contentWidth: parent.width
+        contentHeight: column1.height +20
 
-		Row {
-			width: parent.width
-			height: 80
-			spacing: 10
+        Column {
+            id: column1
+			width: parent.width -32
+			anchors.left: parent.left
+			anchors.leftMargin: 16
+			anchors.rightMargin: 16
+			anchors.topMargin: 12
+			spacing: 12
 
-			RoundedImage {
-				id: picture
-				size: 80
-				height: size
-				width: size
-				imgsource: contactPicture=="none" ? "../common/images/user.png" : contactPicture
-			}
+			Row {
+				width: parent.width
+				height: 80
+				spacing: 10
 
-			Column {
-				width: parent.width - picture.size -10
-				anchors.verticalCenter: picture.verticalCenter
-
-				Label {
-					text: contactName
-					font.bold: true
-					font.pixelSize: 26
-					width: parent.width
-					elide: Text.ElideRight
+				ProfileImage {
+					id: picture
+					size: 80
+					height: size
+					width: size
+					imgsource: contactPicture=="none" ? "../common/images/user.png" : contactPicture
+					onClicked: { 
+						if (bigImage.height>0) 
+							Qt.openUrlExternally(contactPicture.replace(".png",".jpg").replace("contacts","profile"))
+					}
 				}
 
-				Label {
-					font.pixelSize: 22
-					color: "gray"
-					visible: contactStatus!==""
-					text: Helpers.emojify(contactStatus)
-					width: parent.width
-					elide: Text.ElideRight
+				Column {
+					width: parent.width - picture.size -10
+					anchors.verticalCenter: picture.verticalCenter
+
+					Label {
+						text: contactName
+						font.bold: true
+						font.pixelSize: 26
+						width: parent.width
+						elide: Text.ElideRight
+					}
+
+					Label {
+						font.pixelSize: 22
+						color: "gray"
+						visible: contactStatus!==""
+						text: Helpers.emojify(contactStatus)
+						width: parent.width
+						elide: Text.ElideRight
+					}
 				}
 			}
-		}
 
-		Separator {
-			width: parent.width
-		}
-
-		Button {
-			id: statusButton
-			height: 50
-			width: parent.width
-			font.pixelSize: 22
-			text: qsTr("Update status")
-			visible: contactStatus!==""
-			onClicked: { 
-				updateSingleStatus=true
-				statusButton.enabled=false
-				refreshContacts(contactNumber)
+			Separator {
+				width: parent.width
 			}
-		}
 
-		Label {
-			font.pixelSize: 26
-			text: qsTr("Phone:")
-			width: parent.width
-		}
+			Button {
+				id: statusButton
+				height: 50
+				width: parent.width
+				font.pixelSize: 22
+				text: qsTr("Update status")
+				visible: contactStatus!==""
+				onClicked: { 
+					updateSingleStatus=true
+					statusButton.enabled=false
+					refreshContacts(contactNumber)
+				}
+			}
 
-		Rectangle {
-			height: 84
-			width: parent.width
-			color: "transparent"
-			x: 0
+			Label {
+				font.pixelSize: 26
+				text: qsTr("Phone:")
+				width: parent.width
+			}
 
-			BorderImage {
+			Rectangle {
 				height: 84
-				width: parent.width -80
-				x: 0; y: 0
-				source: "pics/buttons/button-left"+(theme.inverted?"-inverted":"")+
-						(bArea.pressed? "-pressed" : "")+".png"
-				border { left: 22; right: 22; bottom: 22; top: 22; }
+				width: parent.width
+				color: "transparent"
+				x: 0
 
-				Label {
-					x: 20; y: 14
-					width: parent.width
-					font.pixelSize: 20
-					text: qsTr("Mobile phone")
+				BorderImage {
+					height: 84
+					width: parent.width -80
+					x: 0; y: 0
+					source: "pics/buttons/button-left"+(theme.inverted?"-inverted":"")+
+							(bArea.pressed? "-pressed" : "")+".png"
+					border { left: 22; right: 22; bottom: 22; top: 22; }
+
+					Label {
+						x: 20; y: 14
+						width: parent.width
+						font.pixelSize: 20
+						text: qsTr("Mobile phone")
+					}
+					Label {
+						x: 20; y: 40
+						width: parent.width
+						font.bold: true
+						font.pixelSize: 24
+						text: contactNumber
+					}
+					MouseArea {
+						id: bArea
+						anchors.fill: parent
+						onClicked: makeCall(contactNumber) 
+					}
 				}
-				Label {
-					x: 20; y: 40
-					width: parent.width
-					font.bold: true
-					font.pixelSize: 24
-					text: contactNumber
+
+				BorderImage {
+					height: 84
+					anchors.right: parent.right
+					width: 80
+					x: 0; y: 0
+					source: "pics/buttons/button-right"+(theme.inverted?"-inverted":"")+
+							(bcArea.pressed? "-pressed" : "")+".png"
+					border { left: 22; right: 22; bottom: 22; top: 22; }
+
+					Image {
+						x: 18
+						anchors.verticalCenter: parent.verticalCenter
+						source: "image://theme/icon-m-toolbar-new-message"+(theme.inverted?"-white":"")
+					}
+					MouseArea {
+						id: bcArea
+						anchors.fill: parent
+						onClicked: sendSMS(contactNumber)
+					}
 				}
-				MouseArea {
-					id: bArea
-					anchors.fill: parent
-					onClicked: makeCall(contactNumber) 
+
+			}
+
+			Separator {
+				width: parent.width
+				visible: contactName==qsTr("Unknown contact")
+			}
+
+			Button {
+				height: 50
+				width: parent.width
+				font.pixelSize: 20
+				text: qsTr("Add to contacts")
+				visible: contactName==qsTr("Unknown contact")
+		        onClicked: Qt.openUrlExternally("tel:"+contactNumber)
+			}
+
+			Separator {
+				width: parent.width
+			}
+
+			Label {
+				text: qsTr("Contact blocked")
+				font.bold: true
+				font.pixelSize: 26
+				color: "red"
+				width: parent.width
+				visible: blockedContacts.indexOf(profileUser)!=-1
+				elide: Text.ElideRight
+			}
+
+			Button {
+				id: blockButton
+				height: 50
+				width: parent.width
+				font.pixelSize: 22
+				text: blockedContacts.indexOf(profileUser)==-1? qsTr("Block contact") : qsTr("Unblock contact")
+				onClicked: { 
+					if (blockedContacts.indexOf(profileUser)==-1)
+						blockContact(profileUser)
+					else
+						unblockContact(profileUser)
 				}
 			}
 
-			BorderImage {
-				height: 84
-				anchors.right: parent.right
-				width: 80
-				x: 0; y: 0
-				source: "pics/buttons/button-right"+(theme.inverted?"-inverted":"")+
-						(bcArea.pressed? "-pressed" : "")+".png"
-				border { left: 22; right: 22; bottom: 22; top: 22; }
-
-				Image {
-					x: 18
-					anchors.verticalCenter: parent.verticalCenter
-					source: "image://theme/icon-m-toolbar-new-message"+(theme.inverted?"-white":"")
-				}
-				MouseArea {
-					id: bcArea
-					anchors.fill: parent
-					onClicked: sendSMS(contactNumber)
-				}
-			}
-
 		}
-
-		Separator {
-			width: parent.width
-			visible: contactName==qsTr("Unknown contact")
-		}
-
-		Button {
-			height: 50
-			width: parent.width
-			font.pixelSize: 20
-			text: qsTr("Add to contacts")
-			visible: contactName==qsTr("Unknown contact")
-            onClicked: Qt.openUrlExternally("tel:"+contactNumber)
-		}
-
-
 	}
 
 }

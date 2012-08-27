@@ -10,7 +10,7 @@ Item {
 	property string istate: "Loading..."
     property alias  asynchronous: image1.asynchronous
 
-	//signal clicked
+	signal clicked
 	//signal pressAndHold
 
     height: size
@@ -39,7 +39,7 @@ Item {
             smooth: true
             fillMode: Image.PreserveAspectCrop
 			cache: false
-            source: imgsource //imgsource.indexOf("@")>-1 ? "" : imgsource
+            source: imgsource.indexOf("@")>-1 ? "" : imgsource
 			onStatusChanged: {
                 if (image1.status==Image.Ready) istate="Loaded!";
 				if (image1.status==Image.Error) istate=imgsource;
@@ -59,11 +59,13 @@ Item {
         visible: imgsource != "" && rounded
     }
 
-    /*MouseArea {
+    MouseArea {
         id: mouseArea
-        anchors.fill: parent
+		x:0; y:0
+        width: size
+        height: size
         onClicked: container.clicked()
-		onPressAndHold: container.pressAndHold()
-    }*/
+		//onPressAndHold: container.pressAndHold()
+    }
 
 }

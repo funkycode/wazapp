@@ -62,7 +62,7 @@ WAPage {
 		contactStatus = MySettings.getSetting("Status", "")
 		contactNumber = myAccount.split('@')[0]
 		contactPicture = "/home/user/.cache/wazapp/contacts/" + contactNumber + ".png"
-		//getPicture(myAccount, "image")
+		getPicture(myAccount, "image")
 
 	}
 
@@ -73,11 +73,19 @@ WAPage {
 				contactPicture = "/home/user/.cache/wazapp/contacts/" + contactNumber + ".png"
 				picture.imgsource = ""
 				picture.imgsource = contactPicture
+				bigImage.source = ""
+				bigImage.source = contactPicture.replace(".png",".jpg").replace("contacts","profile")
 			}
 		}
 		onStatusChanged: {
 			contactStatus = MySettings.getSetting("Status", "")
 		}
+	}
+
+	Image {
+		id: bigImage
+		visible: false
+		source: contactPicture.replace(".png",".jpg").replace("contacts","profile")
 	}
 
 
@@ -93,12 +101,16 @@ WAPage {
 			height: 80
 			spacing: 10
 
-			RoundedImage {
+			ProfileImage {
 				id: picture
 				size: 80
 				height: size
 				width: size
 				imgsource: contactPicture=="none" ? "../common/images/user.png" : contactPicture
+				onClicked: { 
+					if (bigImage.height>0) 
+						Qt.openUrlExternally(contactPicture.replace(".png",".jpg").replace("contacts","profile"))
+				}
 			}
 
 			Column {
@@ -147,7 +159,7 @@ WAPage {
 			width: parent.width
 			font.pixelSize: 22
 			text: qsTr("Change picture")
-            onClicked: pageStack.push (Qt.resolvedUrl("SelectPicture.qml"))
+            onClicked: pageStack.push(setProfilePicture)
 		}
 
 

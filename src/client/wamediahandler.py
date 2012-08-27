@@ -27,10 +27,14 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 from wadebug import WADebug
 
+from connengine import MySocketConnection
+import os, mimetypes, socket, hashlib, ssl
+from time import sleep
+
 class WAMediaHandler(QObject):
 	progressUpdated = QtCore.Signal(int,str,int) #%,jid,message.id
 	error = QtCore.Signal(str,int)
-	success = QtCore.Signal(str,int,str)
+	success = QtCore.Signal(str,int,str,str)
 	
 	def __init__(self,jid,message_id,url,mediaType_id):
 		
@@ -59,8 +63,8 @@ class WAMediaHandler(QObject):
 	def onError(self):
 		self.error.emit(self.jid,self.message_id)
 	
-	def onSuccess(self,savePath):
-		self.success.emit(self.jid,self.message_id,savePath)	
+	def onSuccess(self, data, action):
+		self.success.emit(self.jid,self.message_id,data,action)	
 	
 	def onProgressUpdated(self,progress):
 		self.progressUpdated.emit(progress,self.jid,self.message_id);
@@ -115,7 +119,7 @@ class WAVCardHandler(WAMediaHandler):
 class WAHTTPHandler(QThread):
 	
 	error = QtCore.Signal();
-	success = QtCore.Signal(str);
+	success = QtCore.Signal(str,str);
 	progressUpdated = QtCore.Signal(int)
 	
 	def __init__(self,url,savePath,action="pull"):
@@ -129,9 +133,108 @@ class WAHTTPHandler(QThread):
 	def run(self):
 		if self.action == "pull":
 			self.pull(self.url,self.savePath);
+		if self.action == "push":
+			self.push(self.url);
 			
-			
-			
+	
+	def push(self,image):
+		image = image.replace("file://","")
+
+		self.sock = MySocketConnection();
+		HOST, PORT = 'mms.whatsapp.net', 443
+		self.sock.connect((HOST, PORT));
+		ssl_sock = ssl.wrap_socket(self.sock)
+
+		filename = os.path.basename(image)
+		filetype = mimetypes.guess_type(filename)[0]
+		filesize = os.path.getsize(image)
+
+		print "Uploading " + filename + " - type: " + filetype;
+
+		m = hashlib.md5()
+		m.update(filename)
+		crypto = m.hexdigest()
+
+		boundary = "-------" + m.hexdigest() #"zzXXzzYYzzXXzzQQ"
+		contentLength = 0
+		
+		hBAOS = bytearray()
+		hBAOS += "--"
+		hBAOS += boundary
+		hBAOS += "\r\n"
+		hBAOS += "Content-Disposition: form-data; name=\""
+		hBAOS += "file"
+		hBAOS += "\"; filename=\""
+		hBAOS += filename.encode()
+		hBAOS += "\"\r\n"
+		hBAOS += "Content-Type: " + filetype + "\r\n\r\n"
+
+		fBAOS = bytearray()
+		fBAOS += "\r\n--"
+		fBAOS += boundary
+		fBAOS += "--\r\n"
+		
+		contentLength += len(hBAOS)
+		contentLength += len(fBAOS)
+		contentLength += filesize
+
+		userAgent = "WhatsApp/2.8.4 S60Version/5.2 Device/C7-00"
+
+		POST = bytearray()
+		POST += "POST https://mms.whatsapp.net/client/iphone/upload.php HTTP/1.1\r\n"
+		POST += "Content-Type: multipart/form-data; boundary=" + boundary + "\r\n"
+		POST += "Host: mms.whatsapp.net\r\n"
+		POST += "Content-Length: " + str(contentLength) + "\r\n\r\n"
+
+		print "sending REQUEST "
+		ssl_sock.write(str(POST))
+		ssl_sock.write(str(hBAOS))
+
+		totalsent = 0
+		buf = 4096
+		f = open(image, 'r')
+		stream = f.read()
+		f.close()
+		status = 0
+		lastEmit = 0
+
+		while totalsent < int(filesize):
+			#print "sending " + str(totalsent) + " to " + str(totalsent+buf) + " - real: " + str(len(stream[:buf]))
+			ssl_sock.write(str(stream[:buf]))
+			status = totalsent * 100 / filesize
+			if lastEmit!=status and status!=100:
+				self.progressUpdated.emit(status)
+			lastEmit = status
+			stream = stream[buf:]
+			totalsent = totalsent + buf
+
+		ssl_sock.write(str(fBAOS))
+
+		sleep(2)
+		print "Done!"
+		print "Reading response..."
+		data = ssl_sock.recv(8192)
+		data += ssl_sock.recv(8192)
+		data += ssl_sock.recv(8192)
+		data += ssl_sock.recv(8192)
+		data += ssl_sock.recv(8192)
+		data += ssl_sock.recv(8192)
+		data += ssl_sock.recv(8192)
+		print data;
+		self.progressUpdated.emit(100)
+
+		if "<string>https://mms" in data:
+			n = data.find("<string>https://mms") +8
+			url = data[n:]
+			n = url.find("</string>")
+			url = url[:n]
+			#print "MMS ADDRESS: "+url
+			self.success.emit(url + "," + filename + "," + str(filesize), "upload")
+
+		else:
+			self.error.emit()
+
+
 
 	def pull(self,url,savePath):
 		try:
@@ -158,14 +261,14 @@ class WAHTTPHandler(QThread):
 					self.progressUpdated.emit(status)
 					lastEmit = status;
 			
-			self.success.emit(self.savePath)
+			self.success.emit(self.savePath, "download")
 			
 		except:
 			self.error.emit()
 
 
-def onSuccess(jid,msgId):
-	print "SUCCESS: %s %i"%(jid,msgId)
+def onSuccess(jid,msgId,data):
+	print "SUCCESS: %s %s %i"%(data,jid,msgId)
 	
 def onError(jid,msgId):
 	print "ERROR: %s %i"%(jid,msgId)

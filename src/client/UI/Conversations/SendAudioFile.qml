@@ -39,18 +39,18 @@ WAPage {
     }
 
 	WAHeader{
-        title: qsTr("Select picture")
+        title: qsTr("Select audio")
         anchors.top:parent.top
         width:parent.width
 		height: 73
     }
 
 	Component.onCompleted: {
-		console.log("SELECT DIALOG OPENED")
-		galleryModel.filter = myFilters
+		//console.log("SELECT DIALOG OPENED")
+		//galleryVideoModel.filter = myFilters
 	}
 
-	GalleryFilterUnion {
+	/*GalleryFilterUnion {
 		id: myFilters
     	filters: [
 			GalleryWildcardFilter {
@@ -59,61 +59,66 @@ WAPage {
 			},
 			GalleryWildcardFilter {
 				property: "fileName";
-				value: "*.jpeg";
-			},
-			GalleryWildcardFilter {
-				property: "fileName";
 				value: "*.png";
 			}
 		]
-	}
+	}*/
 
-	GridView {
+
+	ListView {
 		id: view
 		clip: true
         anchors.top: parent.top
         anchors.topMargin: 73
         height: parent.height -73
 		width: parent.width
-		cellWidth: 160
-		cellHeight: 160
-	    cacheBuffer: 1600
-	    pressDelay: 100
 	    maximumFlickVelocity: 3500
 
-		model: galleryModel
+		model: galleryAudioModel
 
-		delegate: Image {
-			source: "/home/user/.thumbnails/grid/" + Qt.md5(url) + ".jpeg"
-			width: 158
-			height: 158
+		delegate: Rectangle {
+			color: "transparent"
+			width: parent.width
+			height: 80
 			smooth: true
 
-			Rectangle {
-				id: rec
-				color: "black"
-				height: 40
-				width: parent.width
-				anchors.bottom: parent.bottom
-				opacity: 0.6
+			Image {
+				id: icon
+				source: "image://theme/icon-m-content-audio"
+				height: 64
+				width: 64
+				smooth: true
+				anchors.left: parent.left
+				anchors.leftMargin: 16
+				anchors.verticalCenter: parent.verticalCenter
 			}
 			Label {
-				anchors.centerIn: rec
-				height: 32
-				width: 152
-				color: "white"
-				font.pixelSize: 14
-				text: fileName
-				wrapMode: Text.WrapAnywhere
-				horizontalAlignment : Text.AlignHCenter
-				verticalAlignment : Text.AlignVCenter
+				width: parent.width - 96
+				color: theme.inverted? "white" : "black"
+				font.pixelSize: 24
+				font.bold: true
+				text: title
+				elide: Text.ElideRight
+				anchors.left: icon.right
+				anchors.leftMargin: 12
+				y: 10
+			}
+			Label {
+				width: parent.width - 96
+				color: theme.inverted? "lightgray" : "darkgray"
+				font.pixelSize: 20
+				text: artist
+				elide: Text.ElideRight
+				anchors.left: icon.right
+				anchors.leftMargin: 12
+				y: 42
 			}
 
 			MouseArea {
 	            id: mouseArea
 	            anchors.fill: parent
 	            onClicked: {
-					sendMediaImageFile(currentJid, decodeURIComponent(url), "/home/user/.thumbnails/grid/" + Qt.md5(url) + ".jpeg")
+					sendMediaAudioFile(currentJid, decodeURIComponent(url))
 					pageStack.pop()
 	            }
 	        }

@@ -184,30 +184,45 @@
     <name>ContactProfile</name>
     <message>
         <location filename="../UI/Contacts/ContactProfile.qml" line="62"/>
-        <location filename="../UI/Contacts/ContactProfile.qml" line="209"/>
-        <location filename="../UI/Contacts/ContactProfile.qml" line="217"/>
+        <location filename="../UI/Contacts/ContactProfile.qml" line="229"/>
+        <location filename="../UI/Contacts/ContactProfile.qml" line="237"/>
         <source>Unknown contact</source>
         <translation>Contacto desconocido</translation>
     </message>
     <message>
-        <location filename="../UI/Contacts/ContactProfile.qml" line="135"/>
+        <location filename="../UI/Contacts/ContactProfile.qml" line="155"/>
         <source>Update status</source>
         <translation>Actualizar estado</translation>
     </message>
     <message>
-        <location filename="../UI/Contacts/ContactProfile.qml" line="146"/>
+        <location filename="../UI/Contacts/ContactProfile.qml" line="166"/>
         <source>Phone:</source>
         <translation>Teléfono:</translation>
     </message>
     <message>
-        <location filename="../UI/Contacts/ContactProfile.qml" line="168"/>
+        <location filename="../UI/Contacts/ContactProfile.qml" line="188"/>
         <source>Mobile phone</source>
         <translation>Teléfono celular</translation>
     </message>
     <message>
-        <location filename="../UI/Contacts/ContactProfile.qml" line="216"/>
+        <location filename="../UI/Contacts/ContactProfile.qml" line="236"/>
         <source>Add to contacts</source>
         <translation>Agregar a contactos</translation>
+    </message>
+    <message>
+        <location filename="../UI/Contacts/ContactProfile.qml" line="246"/>
+        <source>Contact blocked</source>
+        <translation>Contacto bloqueado</translation>
+    </message>
+    <message>
+        <location filename="../UI/Contacts/ContactProfile.qml" line="260"/>
+        <source>Block contact</source>
+        <translation>Bloquear contacto</translation>
+    </message>
+    <message>
+        <location filename="../UI/Contacts/ContactProfile.qml" line="260"/>
+        <source>Unblock contact</source>
+        <translation>Desbloquear contacto</translation>
     </message>
 </context>
 <context>
@@ -266,7 +281,7 @@
 <context>
     <name>Conversation</name>
     <message>
-        <location filename="../UI/Conversations/Conversation.qml" line="710"/>
+        <location filename="../UI/Conversations/Conversation.qml" line="711"/>
         <source>Write your message here</source>
         <translation>Escriba su mensaje aquí</translation>
     </message>
@@ -291,33 +306,33 @@
         <translation>Cargando conversación...</translation>
     </message>
     <message>
-        <location filename="../UI/Conversations/Conversation.qml" line="709"/>
+        <location filename="../UI/Conversations/Conversation.qml" line="710"/>
         <source>Contact blocked</source>
         <translation>Contacto bloqueado</translation>
     </message>
     <message>
-        <location filename="../UI/Conversations/Conversation.qml" line="764"/>
-        <location filename="../UI/Conversations/Conversation.qml" line="925"/>
+        <location filename="../UI/Conversations/Conversation.qml" line="765"/>
+        <location filename="../UI/Conversations/Conversation.qml" line="1011"/>
         <source>Send</source>
         <translation>Enviar</translation>
     </message>
     <message>
-        <location filename="../UI/Conversations/Conversation.qml" line="946"/>
+        <location filename="../UI/Conversations/Conversation.qml" line="1032"/>
         <source>Copy content</source>
         <translation>Copiar contenido</translation>
     </message>
     <message>
-        <location filename="../UI/Conversations/Conversation.qml" line="958"/>
+        <location filename="../UI/Conversations/Conversation.qml" line="1044"/>
         <source>Remove message</source>
         <translation>Eliminar mensaje</translation>
     </message>
     <message>
-        <location filename="../UI/Conversations/Conversation.qml" line="996"/>
+        <location filename="../UI/Conversations/Conversation.qml" line="1082"/>
         <source>Load more...</source>
         <translation>Cargar mas...</translation>
     </message>
     <message>
-        <location filename="../UI/Conversations/Conversation.qml" line="974"/>
+        <location filename="../UI/Conversations/Conversation.qml" line="1060"/>
         <source>View contact profile</source>
         <translation>Ver perfil del contacto</translation>
     </message>
@@ -416,8 +431,8 @@
     </message>
     <message>
         <location filename="../UI/Groups/GroupProfile.qml" line="89"/>
-        <location filename="../UI/Groups/GroupProfile.qml" line="255"/>
-        <location filename="../UI/Groups/GroupProfile.qml" line="386"/>
+        <location filename="../UI/Groups/GroupProfile.qml" line="268"/>
+        <location filename="../UI/Groups/GroupProfile.qml" line="399"/>
         <source>You</source>
         <translation>Usted</translation>
     </message>
@@ -432,33 +447,33 @@
         <translation>Asunto creado por</translation>
     </message>
     <message>
-        <location filename="../UI/Groups/GroupProfile.qml" line="261"/>
+        <location filename="../UI/Groups/GroupProfile.qml" line="274"/>
         <source>Creation date:</source>
         <translation>Fecha de creación:</translation>
     </message>
     <message>
-        <location filename="../UI/Groups/GroupProfile.qml" line="274"/>
+        <location filename="../UI/Groups/GroupProfile.qml" line="287"/>
         <source>Change group subject</source>
         <translation>Cambiar asunto del grupo</translation>
     </message>
     <message>
         <location filename="../UI/Groups/GroupProfile.qml" line="128"/>
-        <location filename="../UI/Groups/GroupProfile.qml" line="307"/>
+        <location filename="../UI/Groups/GroupProfile.qml" line="320"/>
         <source>Group participants:</source>
         <translation>Participantes del grupo:</translation>
     </message>
     <message>
-        <location filename="../UI/Groups/GroupProfile.qml" line="255"/>
+        <location filename="../UI/Groups/GroupProfile.qml" line="268"/>
         <source>Group owner:</source>
         <translation>Dueño del grupo:</translation>
     </message>
     <message>
-        <location filename="../UI/Groups/GroupProfile.qml" line="287"/>
+        <location filename="../UI/Groups/GroupProfile.qml" line="300"/>
         <source>Change group picture</source>
         <translation>Cambiar imagen del grupo</translation>
     </message>
     <message>
-        <location filename="../UI/Groups/GroupProfile.qml" line="327"/>
+        <location filename="../UI/Groups/GroupProfile.qml" line="340"/>
         <source>Add</source>
         <translation>Agregar</translation>
     </message>
@@ -539,7 +554,7 @@
     </message>
     <message>
         <location filename="../UI/Conversations/Bubbles/MediaBubble.qml" line="105"/>
-        <location filename="../UI/Conversations/Bubbles/MediaBubble.qml" line="208"/>
+        <location filename="../UI/Conversations/Bubbles/MediaBubble.qml" line="211"/>
         <source>Download</source>
         <translation>Descargar</translation>
     </message>
@@ -559,7 +574,7 @@
         <translation>Reintentar</translation>
     </message>
     <message>
-        <location filename="../UI/Conversations/Bubbles/MediaBubble.qml" line="212"/>
+        <location filename="../UI/Conversations/Bubbles/MediaBubble.qml" line="215"/>
         <source>Initializing</source>
         <translation>Inicializando</translation>
     </message>
@@ -572,12 +587,12 @@
         <translation>Mi Perfil</translation>
     </message>
     <message>
-        <location filename="../UI/Profile/Profile.qml" line="136"/>
+        <location filename="../UI/Profile/Profile.qml" line="148"/>
         <source>Change status</source>
         <translation>Cambiar estado</translation>
     </message>
     <message>
-        <location filename="../UI/Profile/Profile.qml" line="149"/>
+        <location filename="../UI/Profile/Profile.qml" line="161"/>
         <source>Change picture</source>
         <translation>Cambiar imagen</translation>
     </message>
@@ -626,6 +641,14 @@
         <location filename="../UI/Conversations/SendPicture.qml" line="42"/>
         <source>Select picture</source>
         <translation>Seleccionar imagen</translation>
+    </message>
+</context>
+<context>
+    <name>SendVideo</name>
+    <message>
+        <location filename="../UI/Conversations/SendVideo.qml" line="42"/>
+        <source>Select video</source>
+        <translation>Seleccionar video</translation>
     </message>
 </context>
 <context>
@@ -752,22 +775,22 @@
 <context>
     <name>StanzaReader</name>
     <message>
-        <location filename="../waxmpp.py" line="1208"/>
+        <location filename="../waxmpp.py" line="1310"/>
         <source>Image</source>
         <translation>Imagen</translation>
     </message>
     <message>
-        <location filename="../waxmpp.py" line="1211"/>
+        <location filename="../waxmpp.py" line="1313"/>
         <source>Audio</source>
         <translation>Audio</translation>
     </message>
     <message>
-        <location filename="../waxmpp.py" line="1214"/>
+        <location filename="../waxmpp.py" line="1316"/>
         <source>Video</source>
         <translation>Video</translation>
     </message>
     <message>
-        <location filename="../waxmpp.py" line="1225"/>
+        <location filename="../waxmpp.py" line="1327"/>
         <source>Location</source>
         <translation>Ubicacion</translation>
     </message>
@@ -836,32 +859,42 @@
 <context>
     <name>WAEventHandler</name>
     <message>
-        <location filename="../waxmpp.py" line="519"/>
+        <location filename="../waxmpp.py" line="546"/>
+        <source>Image</source>
+        <translation>Imagen</translation>
+    </message>
+    <message>
+        <location filename="../waxmpp.py" line="569"/>
+        <source>Video</source>
+        <translation>Video</translation>
+    </message>
+    <message>
+        <location filename="../waxmpp.py" line="620"/>
         <source>%1 has changed the group picture</source>
         <translation>%1 cambió la imagen del grupo</translation>
     </message>
     <message>
-        <location filename="../waxmpp.py" line="522"/>
+        <location filename="../waxmpp.py" line="623"/>
         <source>%1 has join the group</source>
         <translation>%1 se unió al grupo</translation>
     </message>
     <message>
-        <location filename="../waxmpp.py" line="525"/>
+        <location filename="../waxmpp.py" line="626"/>
         <source>%1 has left the group</source>
         <translation>%1 abandonó el grupo</translation>
     </message>
     <message>
-        <location filename="../waxmpp.py" line="528"/>
+        <location filename="../waxmpp.py" line="629"/>
         <source>%1 has changed the subject to %2</source>
         <translation>%1 cambió el asunto a %2</translation>
     </message>
     <message>
-        <location filename="../waxmpp.py" line="530"/>
+        <location filename="../waxmpp.py" line="631"/>
         <source>You</source>
         <translation>Usted</translation>
     </message>
     <message>
-        <location filename="../waxmpp.py" line="413"/>
+        <location filename="../waxmpp.py" line="454"/>
         <source>Location</source>
         <translation>Ubicacion</translation>
     </message>
@@ -918,94 +951,94 @@
 <context>
     <name>main</name>
     <message>
-        <location filename="../UI/main.qml" line="311"/>
+        <location filename="../UI/main.qml" line="321"/>
         <source>Retrieving contacts list...</source>
         <translation>Recuperando lista de contactos...</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="313"/>
+        <location filename="../UI/main.qml" line="323"/>
         <source>Fetching contacts...</source>
         <translation>Buscando contactos...</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="315"/>
+        <location filename="../UI/main.qml" line="325"/>
         <source>Loading contacts...</source>
         <translation>Cargando contactos...</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="549"/>
+        <location filename="../UI/main.qml" line="579"/>
         <source>Chats</source>
         <translation>Chats</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="556"/>
+        <location filename="../UI/main.qml" line="586"/>
         <source>Contacts</source>
         <translation>Contactos</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="583"/>
+        <location filename="../UI/main.qml" line="613"/>
         <source>Update Contacts</source>
         <translation>Actualizar contactos</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="584"/>
+        <location filename="../UI/main.qml" line="614"/>
         <source>The Phone contacts database has changed. Do you want to sync contacts now?</source>
         <translation>La base de datos de contactos del teléfono ha sido actualizada. ¿Desea sincronizar los contactos ahora?</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="592"/>
+        <location filename="../UI/main.qml" line="622"/>
         <source>Confirm Quit</source>
         <translation>Confirmar salida</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="593"/>
+        <location filename="../UI/main.qml" line="623"/>
         <source>Are you sure you want to quit Wazapp?</source>
         <translation>Está seguro que desea salir de Wazapp?</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="585"/>
-        <location filename="../UI/main.qml" line="594"/>
+        <location filename="../UI/main.qml" line="615"/>
+        <location filename="../UI/main.qml" line="624"/>
         <source>Yes</source>
         <translation>Si</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="586"/>
-        <location filename="../UI/main.qml" line="595"/>
+        <location filename="../UI/main.qml" line="616"/>
+        <location filename="../UI/main.qml" line="625"/>
         <source>No</source>
         <translation>No</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="603"/>
+        <location filename="../UI/main.qml" line="633"/>
         <source>version</source>
         <translation>versión</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="604"/>
+        <location filename="../UI/main.qml" line="634"/>
         <source>This is a %1 version.</source>
         <translation>Esta es una versión %1.</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="605"/>
+        <location filename="../UI/main.qml" line="635"/>
         <source>You are trying it at your own risk.</source>
         <translation>Está probando bajo su propio riesgo.</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="606"/>
+        <location filename="../UI/main.qml" line="636"/>
         <source>Please report any bugs to</source>
         <translation>Por favor reporte errores a</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="617"/>
+        <location filename="../UI/main.qml" line="647"/>
         <source>Wazapp %1 is now available for update!</source>
         <translation>Wazapp %1 ya está disponible para actualizar!</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="619"/>
+        <location filename="../UI/main.qml" line="649"/>
         <source>Details</source>
         <translation>Detalles</translation>
     </message>
     <message>
-        <location filename="../UI/main.qml" line="620"/>
+        <location filename="../UI/main.qml" line="650"/>
         <source>Cancel</source>
         <translation>Cancelar</translation>
     </message>

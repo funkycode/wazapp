@@ -157,7 +157,7 @@ Rectangle{
 
 		Image {
 			id: userblocked
-	        anchors.verticalCenter: parent.verticalCenter
+	        anchors.verticalCenter: contact_picture.verticalCenter
 	        width: 28
 	        height: 28
 	        smooth: true

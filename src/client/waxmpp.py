@@ -40,6 +40,8 @@ from wadebug import WADebug
 import thread
 from watime import WATime
 from time import sleep
+import base64
+
 #import Image
 #import ExifTags
 
@@ -240,8 +242,41 @@ class WAEventHandler(WAEventBase):
 		
 		self.mediaHandlers.append(mediaHandler);
 	
+
+	def uploadMedia(self,mediaId):
+		mediaMessage = WAXMPP.message_store.store.Message.create()
+		message = mediaMessage.findFirst({"media_id":mediaId})
+		jid = message.getConversation().getJid()
+		media = message.getMedia()
+		
+		mediaHandler = WAMediaHandler(jid,message.id,media.local_path,media.mediatype_id)
+		
+		mediaHandler.success.connect(self._mediaTransferSuccess)
+		mediaHandler.error.connect(self._mediaTransferError)
+		mediaHandler.progressUpdated.connect(self.mediaTransferProgressUpdated)
+		
+		mediaHandler.push();
+		
+		self.mediaHandlers.append(mediaHandler);
+		
+	def uploadGroupMedia(self,mediaId):
+		mediaMessage = WAXMPP.message_store.store.Groupmessage.create()
+		message = mediaMessage.findFirst({"media_id":mediaId})
+		jid = message.getConversation().getJid()
+		media = message.getMedia()
+		
+		mediaHandler = WAMediaHandler(jid,message.id,media.local_path,media.mediatype_id)
+		
+		mediaHandler.success.connect(self._mediaTransferSuccess)
+		mediaHandler.error.connect(self._mediaTransferError)
+		mediaHandler.progressUpdated.connect(self.mediaTransferProgressUpdated)
+		
+		mediaHandler.push();
+		
+		self.mediaHandlers.append(mediaHandler);
 	
-	def _mediaTransferSuccess(self, jid, messageId,savePath):
+	
+	def _mediaTransferSuccess(self, jid, messageId, data, action):
 		try:
 			jid.index('-')
 			message = WAXMPP.message_store.store.Groupmessage.create()
@@ -252,16 +287,23 @@ class WAEventHandler(WAEventBase):
 		message = message.findFirst({'id':messageId});
 		
 		if(message.id):
+			print "MULTIMEDIA HANDLING DONE! ACTION: " + action
 			media = message.getMedia()
-			media.preview = savePath if media.mediatype_id == WAConstants.MEDIA_TYPE_IMAGE else None
-			media.local_path = savePath
+			if (action=="download"):
+				#media.preview = data if media.mediatype_id == WAConstants.MEDIA_TYPE_IMAGE else None
+				media.local_path = data
+			else:
+				media.remote_url = data
 			media.transfer_status = 2
 			media.save()
 			self._d(media.getModelData())
 			self.mediaTransferSuccess.emit(jid,messageId, media.getModelData())
-		
+			if (action=="upload"):
+				self.sendMediaMessage(jid,messageId,data)
+
 		
 	def _mediaTransferError(self, jid, messageId):
+		print "MULTIMEDIA HANDLING ERROR!!!"
 		try:
 			jid.index('-')
 			message = WAXMPP.message_store.store.Groupmessage.create()
@@ -481,19 +523,105 @@ class WAEventHandler(WAEventBase):
 
 
 
-	def sendMediaMessage(self,jid,url):
-		url = url.replace("file://","")
-		self._d("sending media message to " +jid + " - file: " + url)
+
+	def sendMediaImageFile(self,jid,image):
+		image = image.replace("file://","")
+
+		user_img = QImage(image)
+
+		if user_img.height() > user_img.width():
+			preimg = QPixmap.fromImage(QImage(user_img.scaledToWidth(64, Qt.SmoothTransformation)))
+		elif user_img.height() < user_img.width():
+			preimg = QPixmap.fromImage(QImage(user_img.scaledToHeight(64, Qt.SmoothTransformation)))
+		else:
+			preimg = QPixmap.fromImage(QImage(user_img.scaled(64, 64, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)))
+
+		preimg.save("/home/user/.cache/wazapp/temp.png", "PNG")
+		f = open("/home/user/.cache/wazapp/temp.png", 'r')
+		stream = base64.b64encode(f.read())
+		f.close()
+
+		self._d("creating MMS for " +jid + " - file: " + image)
 		fmsg = WAXMPP.message_store.createMessage(jid);
 		
+		mediaItem = WAXMPP.message_store.store.Media.create()
+		mediaItem.mediatype_id = 2
+		#mediaItem.remote_url = url
+		mediaItem.local_path = image
+		mediaItem.transfer_status = 0
+		mediaItem.preview = stream
+
+		fmsg.content = QtCore.QCoreApplication.translate("WAEventHandler", "Image")
+		fmsg.Media = mediaItem
+
 		if fmsg.Conversation.type == "group":
 			contact = WAXMPP.message_store.store.Contact.getOrCreateContactByJid(self.conn.jid)
 			fmsg.setContact(contact);
 		
-		fmsg.setData({"status":0,"content":msg_text.encode('utf-8'),"type":1})
+		fmsg.setData({"status":0,"content":fmsg.content,"type":1})
 		WAXMPP.message_store.pushMessage(jid,fmsg)
 		
-		self.conn.sendNewMMSMessage(fmsg);
+
+	def sendMediaVideoFile(self,jid,video):
+		self._d("creating MMS for " +jid + " - file: " + video)
+		fmsg = WAXMPP.message_store.createMessage(jid);
+		
+		mediaItem = WAXMPP.message_store.store.Media.create()
+		mediaItem.mediatype_id = 4
+		#mediaItem.remote_url = url
+		mediaItem.local_path = video.replace("file://","")
+		mediaItem.transfer_status = 0
+
+		fmsg.content = QtCore.QCoreApplication.translate("WAEventHandler", "Video")
+		fmsg.Media = mediaItem
+
+		if fmsg.Conversation.type == "group":
+			contact = WAXMPP.message_store.store.Contact.getOrCreateContactByJid(self.conn.jid)
+			fmsg.setContact(contact);
+		
+		fmsg.setData({"status":0,"content":fmsg.content,"type":1})
+		WAXMPP.message_store.pushMessage(jid,fmsg)
+
+
+
+	def sendMediaAudioFile(self,jid,audio):
+		self._d("creating MMS for " +jid + " - file: " + audio)
+		fmsg = WAXMPP.message_store.createMessage(jid);
+		
+		mediaItem = WAXMPP.message_store.store.Media.create()
+		mediaItem.mediatype_id = 3
+		#mediaItem.remote_url = url
+		mediaItem.local_path = audio.replace("file://","")
+		mediaItem.transfer_status = 0
+
+		fmsg.content = QtCore.QCoreApplication.translate("WAEventHandler", "Audio")
+		fmsg.Media = mediaItem
+
+		if fmsg.Conversation.type == "group":
+			contact = WAXMPP.message_store.store.Contact.getOrCreateContactByJid(self.conn.jid)
+			fmsg.setContact(contact);
+		
+		fmsg.setData({"status":0,"content":fmsg.content,"type":1})
+		WAXMPP.message_store.pushMessage(jid,fmsg)
+
+
+
+	def sendMediaMessage(self,jid,messageId,data):
+		try:
+			jid.index('-')
+			message = WAXMPP.message_store.store.Groupmessage.create()
+		except ValueError:
+			message = WAXMPP.message_store.store.Message.create()
+		
+		message = message.findFirst({'id':messageId});
+		media = message.getMedia()
+
+		url = data.split(',')[0]
+		name = data.split(',')[1]
+		size = data.split(',')[2]
+
+		self._d("sending media message to " + jid + " - file: " + url)
+		self.conn.sendNewMMSMessage(message, url, name, size, media.preview, media.mediatype_id);
 
 	
 	def notificationClicked(self,jid):
@@ -1050,6 +1178,7 @@ class StanzaReader(QThread):
 				author = bodyNode.getAttributeValue("author");
 				fmsg.Media = None
 				fmsg.setData({"status":0,"key":key.toString(),"content":author,"type":23});
+				self.connection.sendGetPicture(fromAttribute, "image")
 				cont = True
 
 			else:
@@ -1608,7 +1737,12 @@ class WAXMPP():
 		messages = WAXMPP.message_store.getUnsent();
 		self._d("Resending %i old messages"%(len(messages)))
 		for m in messages:
-			self.sendMessageWithBody(m);
+			media = m.getMedia()
+			if media is not None:
+				if media.transfer_status == 2:
+					self.sendMessageWithBody(m);
+			else:
+				self.sendMessageWithBody(m);
 		self._d("Resending old messages done")
 		
 	
@@ -1640,9 +1774,10 @@ class WAXMPP():
 		self.out.write(messageNode);
 
 	def sendMessageReceived(self,fmsg):
-		receivedNode = ProtocolTreeNode("received",{"xmlns": "urn:xmpp:receipts"})
-		messageNode = ProtocolTreeNode("message",{"to":fmsg.key.remote_jid,"type":"chat","id":fmsg.key.id},[receivedNode]);
-		self.out.write(messageNode);
+		if not isinstance(fmsg.key, str):
+			receivedNode = ProtocolTreeNode("received",{"xmlns": "urn:xmpp:receipts"})
+			messageNode = ProtocolTreeNode("message",{"to":fmsg.key.remote_jid,"type":"chat","id":fmsg.key.id},[receivedNode]);
+			self.out.write(messageNode);
 
 
 	def sendDeliveredReceiptAck(self,to,msg_id):
@@ -1736,9 +1871,15 @@ class WAXMPP():
 		self.msg_id+=1;
 
 
-	def sendNewMMSMessage(self,fmsg):
-		bodyNode = ProtocolTreeNode("body",None,None,fmsg.content);
-		self.out.write(self.getMessageNode(fmsg,bodyNode));
+	def sendNewMMSMessage(self,fmsg,url,name,size,preview,mediatypeid):
+		mtype = "image"
+		if mediatypeid == 3:
+			mtype = "audio"
+		if mediatypeid == 4:
+			mtype = "video"
+
+		mmNode = ProtocolTreeNode("media", {"xmlns":"urn:xmpp:whatsapp:mms","type":mtype,"file":name,"size":size,"url":url},None,preview);
+		self.out.write(self.getMessageNode(fmsg,mmNode));
 		self.msg_id+=1;
 
 
@@ -1889,6 +2030,7 @@ class WAXMPP():
 
 
 	def sendSetPicture(self, jid, filepath):
+		print "Setting picture " + filepath + " for " + jid
 		filepath = filepath.replace("file://","")
 		rotation = 0
 		#im = Image.open(filepath)
@@ -1929,7 +2071,8 @@ class WAXMPP():
 		self.stanzaReader.requests[idx] = self.stanzaReader.handleSetPicture
 		
 		listNode = ProtocolTreeNode("picture",{"xmlns":"w:profile:picture","type":"image"}, None, stream)
-		iqNode = ProtocolTreeNode("iq",{"id":idx,"to":jid,"type":"set"},[listNode])
+		#prevNode = ProtocolTreeNode("picture",{"type":"preview"}, None, bytearray(stream))
+		iqNode = ProtocolTreeNode("iq",{"id":idx,"to":jid,"type":"set"},[listNode, listNode])
 		
 		self.out.write(iqNode)
 

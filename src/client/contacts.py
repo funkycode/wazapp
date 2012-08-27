@@ -159,6 +159,7 @@ class WAContacts(QObject):
 		user_img = QImage("/opt/waxmppplugin/bin/wazapp/UI/common/images/user.png")
 		user_img.save("/home/user/.cache/wazapp/contacts/" + jname + ".png", "PNG")
 		user_img = QImage("/home/user/.cache/wazapp/contacts/" + jname + ".jpg")
+		user_img.save("/home/user/.cache/wazapp/profile/" + jname + ".jpg", "JPEG")
 		mask_img = QImage("/opt/waxmppplugin/bin/wazapp/UI/common/images/usermask.png")
 		preimg = QPixmap.fromImage(QImage(user_img.scaled(96, 96, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)));
 		PixmapToBeMasked = QImage(96, 96, QImage.Format_ARGB32_Premultiplied);
@@ -169,7 +170,7 @@ class WAContacts(QObject):
 		Painter.drawPixmap(0, 0, 96, 96, Mask);
 		Painter.end()
 		PixmapToBeMasked.save("/home/user/.cache/wazapp/contacts/" + jname + ".png", "PNG")
-		os.remove("/home/user/.cache/wazapp/contacts/" + jname + ".jpg")
+		#os.remove("/home/user/.cache/wazapp/contacts/" + jname + ".jpg")
 		self.contactUpdated.emit(jid);
 
 				
@@ -187,6 +188,8 @@ class WAContacts(QObject):
 		
 		if not os.path.exists("/home/user/.cache/wazapp/contacts"):
 			os.makedirs("/home/user/.cache/wazapp/contacts")
+		if not os.path.exists("/home/user/.cache/wazapp/profile"):
+			os.makedirs("/home/user/.cache/wazapp/profile")
 
 		for wc in contacts:
 			for c in phoneContacts:
@@ -235,8 +238,11 @@ class WAContacts(QObject):
 			#wc.append(c['id'])
 			wc.append(c['picture'])
 			wc.append(c['numbers'])
-			tmp.append(wc);
+			if ( len(c['numbers'])>0):
+				tmp.append(wc);
 		return sorted(tmp)
+
+
 
 	def exportContact(self, jid, name):
 		cm = self.manager

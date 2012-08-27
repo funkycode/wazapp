@@ -115,7 +115,7 @@ Item {
            }
 
            onClicked: {
-               if(delegateContainer.media.transfer_status != 2)
+               if(from_me==0 && delegateContainer.media.transfer_status != 2)
                    return;
 
                var prefix = "";
@@ -129,12 +129,18 @@ Item {
                Qt.openUrlExternally( prefix + decodeURIComponent(delegateContainer.media.local_path) );
            }
 
+           onUploadClicked: {
+               if(delegateContainer.isGroup)
+               		appWindow.uploadGroupMedia(delegateContainer.media.id);
+               else
+					appWindow.uploadMedia(delegateContainer.media.id);
+           }
+
            onDownloadClicked: {
-               if(delegateContainer.isGroup){
-                   appWindow.fetchGroupMedia(delegateContainer.media.id);
-               }else{
-                   appWindow.fetchMedia(delegateContainer.media.id);
-               }
+               if(delegateContainer.isGroup)
+               		appWindow.fetchGroupMedia(delegateContainer.media.id);
+               else
+					appWindow.fetchMedia(delegateContainer.media.id);
            }
 
        }

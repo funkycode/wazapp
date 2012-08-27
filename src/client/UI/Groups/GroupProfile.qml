@@ -183,12 +183,21 @@ WAPage {
 			if (profileUser == ujid) {
 				picture.imgsource = ""
 				picture.imgsource = groupPicture
+				bigImage.source = ""
+				bigImage.source = groupPicture.replace(".png",".jpg").replace("contacts","profile")
 			}
 		}	
 
 	}
 
 	ListModel { id:partModel }
+
+
+	Image {
+		id: bigImage
+		visible: false
+		source: groupPicture.replace(".png",".jpg").replace("contacts","profile")
+	}
 
 
     Flickable {
@@ -212,12 +221,16 @@ WAPage {
 				height: 80
 				spacing: 10
 
-				RoundedImage {
+				ProfileImage {
 					id: picture
 					size: 80
 					height: size
 					width: size
 					imgsource: groupPicture
+					onClicked: { 
+						if (bigImage.height>0) 
+							Qt.openUrlExternally(groupPicture.replace(".png",".jpg").replace("contacts","profile"))
+					}
 				}
 
 				Column {
@@ -286,7 +299,7 @@ WAPage {
 				font.pixelSize: 22
 				text: qsTr("Change group picture")
 				enabled: !working
-				onClicked: pageStack.push (Qt.resolvedUrl("../Profile/SelectPicture.qml"))
+				onClicked: pageStack.push(setProfilePicture)
 			}
 
 			Separator {

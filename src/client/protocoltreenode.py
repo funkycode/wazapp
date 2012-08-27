@@ -230,7 +230,7 @@ class BinTreeNodeReader():
 		ret = self.nextTreeInternal();
 		self._d("Incoming")
 		if ret is not None:
-			if 'picture type="image"' in ret.toString():
+			if 'picture type="' in ret.toString():
 				self._d("<Picture!!!>");
 			else:
 				self._d("\n%s"%ret.toString());
