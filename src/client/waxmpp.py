@@ -42,8 +42,8 @@ from watime import WATime
 from time import sleep
 import base64
 
-#import Image
-#import ExifTags
+import Image
+from PIL.ExifTags import TAGS
 
 
 class WAEventHandler(WAEventBase):
@@ -110,6 +110,8 @@ class WAEventHandler(WAEventBase):
 		self.account = "";
 
 		self.blockedContacts = "";
+
+		self.resizeImages = False;
 		
 		#self.connMonitor.sleeping.connect(self.networkUnavailable);
 		#self.connMonitor.checked.connect(self.checkConnection);
@@ -215,7 +217,7 @@ class WAEventHandler(WAEventBase):
 		jid = message.getConversation().getJid()
 		media = message.getMedia()
 		
-		mediaHandler = WAMediaHandler(jid,message.id,media.remote_url,media.mediatype_id)
+		mediaHandler = WAMediaHandler(jid,message.id,media.remote_url,media.mediatype_id,self.account)
 		
 		mediaHandler.success.connect(self._mediaTransferSuccess)
 		mediaHandler.error.connect(self._mediaTransferError)
@@ -232,7 +234,7 @@ class WAEventHandler(WAEventBase):
 		jid = message.getConversation().getJid()
 		media = message.getMedia()
 		
-		mediaHandler = WAMediaHandler(jid,message.id,media.remote_url,media.mediatype_id)
+		mediaHandler = WAMediaHandler(jid,message.id,media.remote_url,media.mediatype_id,self.account)
 		
 		mediaHandler.success.connect(self._mediaTransferSuccess)
 		mediaHandler.error.connect(self._mediaTransferError)
@@ -249,7 +251,7 @@ class WAEventHandler(WAEventBase):
 		jid = message.getConversation().getJid()
 		media = message.getMedia()
 		
-		mediaHandler = WAMediaHandler(jid,message.id,media.local_path,media.mediatype_id)
+		mediaHandler = WAMediaHandler(jid,message.id,media.local_path,media.mediatype_id,self.account,self.resizeImages)
 		
 		mediaHandler.success.connect(self._mediaTransferSuccess)
 		mediaHandler.error.connect(self._mediaTransferError)
@@ -265,7 +267,7 @@ class WAEventHandler(WAEventBase):
 		jid = message.getConversation().getJid()
 		media = message.getMedia()
 		
-		mediaHandler = WAMediaHandler(jid,message.id,media.local_path,media.mediatype_id)
+		mediaHandler = WAMediaHandler(jid,message.id,media.local_path,media.mediatype_id,self.account,self.resizeImages)
 		
 		mediaHandler.success.connect(self._mediaTransferSuccess)
 		mediaHandler.error.connect(self._mediaTransferError)
@@ -469,6 +471,11 @@ class WAEventHandler(WAEventBase):
 		self._d("Blocked contacts: " + contacts)
 		self.blockedContacts = contacts;
 
+	
+	def setResizeImages(self,resize):
+		self._d("Resize images: " + str(resize))
+		self.resizeImages = resize;
+
 
 	def sendVCard(self,jid,contactName):
 		contactName = contactName.encode('utf-8')
@@ -491,22 +498,33 @@ class WAEventHandler(WAEventBase):
 		mediaItem.local_path = "/home/user/MyDocs/Wazapp/media/contacts/"+contactName+".vcf"
 		mediaItem.transfer_status = 2
 
+		vcardImage = ""
+
 		if "PHOTO;BASE64" in stream:
 			n = stream.find("PHOTO;BASE64") +13
 			vcardImage = stream[n:]
 			vcardImage = vcardImage.replace("END:VCARD","")
-			mediaItem.preview = vcardImage
+			#mediaItem.preview = vcardImage
 
 		if "PHOTO;TYPE=JPEG" in stream:
 			n = stream.find("PHOTO;TYPE=JPEG") +27
 			vcardImage = stream[n:]
 			vcardImage = vcardImage.replace("END:VCARD","")
-			mediaItem.preview = vcardImage
+			#mediaItem.preview = vcardImage
 
 		if "PHOTO;TYPE=PNG" in stream:
 			n = stream.find("PHOTO;TYPE=PNG") +26
 			vcardImage = stream[n:]
 			vcardImage = vcardImage.replace("END:VCARD","")
+			#mediaItem.preview = vcardImage
+
+		print "VCARD SIZE: " + str(len(stream))
+
+		if len(stream) > 65536:
+			print "Vcard too large! Removing photo..."
+			n = stream.find("PHOTO")
+			stream = stream[:n] + "END:VCARD"
+		else:
 			mediaItem.preview = vcardImage
 
 		fmsg.content = contactName
@@ -536,8 +554,8 @@ class WAEventHandler(WAEventBase):
 		else:
 			preimg = QPixmap.fromImage(QImage(user_img.scaled(64, 64, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)))
 
-		preimg.save("/home/user/.cache/wazapp/temp.png", "PNG")
-		f = open("/home/user/.cache/wazapp/temp.png", 'r')
+		preimg.save("/home/user/.cache/wazapp/temp2.png", "PNG")
+		f = open("/home/user/.cache/wazapp/temp2.png", 'r')
 		stream = base64.b64encode(f.read())
 		f.close()
 
@@ -641,31 +659,33 @@ class WAEventHandler(WAEventBase):
 				msg_contact.picture = WAConstants.DEFAULT_GROUP_PICTURE
 			
 						
-			msgContent = fmsg.content
+			msgContent = fmsg.content #.encode('utf-8')
+			newContent = msgContent
 			contactName = msg_contact.name
 			if fmsg.type == 23:
-				msgContent = QtCore.QCoreApplication.translate("WAEventHandler", "%1 has changed the group picture")
-				msgContent = msgContent.replace("%1", contactName)
+				newContent = QtCore.QCoreApplication.translate("WAEventHandler", "%1 has changed the group picture")
+				newContent = newContent.replace("%1", contactName)
 			elif fmsg.type == 20:
-				msgContent = QtCore.QCoreApplication.translate("WAEventHandler", "%1 has join the group")
-				msgContent = msgContent.replace("%1", contactName)
+				newContent = QtCore.QCoreApplication.translate("WAEventHandler", "%1 has join the group")
+				newContent = newContent.replace("%1", contactName)
 			elif fmsg.type == 21:
-				msgContent = QtCore.QCoreApplication.translate("WAEventHandler", "%1 has left the group")
-				msgContent = msgContent.replace("%1", contactName)
+				newContent = QtCore.QCoreApplication.translate("WAEventHandler", "%1 has left the group")
+				newContent = newContent.replace("%1", contactName)
 			elif fmsg.type == 22:
-				msgContent = QtCore.QCoreApplication.translate("WAEventHandler", "%1 has changed the subject to %2")
+				newContent = QtCore.QCoreApplication.translate("WAEventHandler", "%1 has changed the subject to %2")
 				if contactName == self.account:
 					contactName == QtCore.QCoreApplication.translate("WAEventHandler", "You")
-				msgContent = msgContent.replace("%1", contactName)
-				msgContent = msgContent.replace("%2", fmsg.content)
+				newContent = newContent.replace("%1", contactName)
+				newContent = newContent.replace("%2", fmsg.content.encode('utf8'))
+			
 							
 			if fmsg.Conversation.type == "single":
 				msgPicture = "/home/user/.cache/wazapp/contacts/" + msg_contact.jid.replace("@s.whatsapp.net","") + ".png"
-				self.notifier.newMessage(msg_contact.jid, contactName, msgContent, msgPicture.encode('utf-8'),callback = self.notificationClicked);
+				self.notifier.newMessage(msg_contact.jid, contactName, newContent, msgPicture.encode('utf-8'),callback = self.notificationClicked);
 			else:
 				conversation = fmsg.getConversation();
 				msgPicture = "/home/user/.cache/wazapp/contacts/" + conversation.jid.replace("@g.us","") + ".png"
-				self.notifier.newMessage(conversation.jid, "%s - %s"%(contactName,conversation.subject), msgContent, msgPicture.encode('utf-8'),callback = self.notificationClicked);
+				self.notifier.newMessage(conversation.jid, "%s - %s"%(contactName,conversation.subject), newContent, msgPicture.encode('utf-8'),callback = self.notificationClicked);
 			
 			self._d("A {msg_type} message was received: {data}".format(msg_type=msg_type, data=fmsg.content));
 		else:
@@ -676,7 +696,7 @@ class WAEventHandler(WAEventBase):
 		#	self.conn.sendGetPicture(conversation.jid,"image")
 
 		if(fmsg.wantsReceipt):
-			self.conn.sendMessageReceived(fmsg.key.remote_jid,mtype,msg.key.id);
+			self.conn.sendMessageReceived(fmsg.key.remote_jid,mtype,fmsg.key.id);
 
 	
 		
@@ -1366,8 +1386,6 @@ class StanzaReader(QThread):
 						msgdata = messageNode.getChild("media").getChild("vcard").toString()
 						msgname = messageNode.getChild("media").getChild("vcard").getAttributeValue("name")
 						if msgdata is not None:
-							if not os.path.exists("/home/user/MyDocs/Wazapp/media/contacts"):
-								os.makedirs("/home/user/MyDocs/Wazapp/media/contacts")
 							text_file = open("/home/user/MyDocs/Wazapp/media/contacts/" + msgname + ".vcf", "w")
 							n = msgdata.find(">") +1
 							msgdata = msgdata[n:]
@@ -1781,7 +1799,7 @@ class WAXMPP():
 		self.out.write(messageNode);
 
 	def sendMessageReceived(self,jid,mtype,mid):
-		print "sending message received to "+jid+" - type:"+mtype+" - id:"+mid
+		self._d("sending message received to "+jid+" - type:"+mtype+" - id:"+mid)
 		receivedNode = ProtocolTreeNode("received",{"xmlns": "urn:xmpp:receipts"})
 		messageNode = ProtocolTreeNode("message",{"to":jid,"type":mtype,"id":mid},[receivedNode]);
 		self.out.write(messageNode);
@@ -1895,8 +1913,8 @@ class WAXMPP():
 		self.out.write(self.getMessageNode(fmsg,bodyNode));
 		self.msg_id+=1;
 
-	def sendMessageWithVCard(self,fmsg,data):
-		cardNode = ProtocolTreeNode("vcard",{"name":fmsg.content},None,data);
+	def sendMessageWithVCard(self,fmsg,stream):
+		cardNode = ProtocolTreeNode("vcard",{"name":fmsg.content},None,stream);
 		bodyNode = ProtocolTreeNode("media", {"xmlns":"urn:xmpp:whatsapp:mms","type":"vcard"},[cardNode])
 		self.out.write(self.getMessageNode(fmsg,bodyNode));
 		self.msg_id+=1;
@@ -2038,48 +2056,61 @@ class WAXMPP():
 
 	def sendSetPicture(self, jid, filepath):
 		print "Setting picture " + filepath + " for " + jid
-		filepath = filepath.replace("file://","")
+		image = filepath.replace("file://","")
 		rotation = 0
-		#im = Image.open(filepath)
-		#exif=dict((ExifTags.TAGS[k], v) for k, v in im._getexif().items())
-		#if exif['Orientation'] == 6:
-		#    rotation = 90
+
+		ret = {}
+		im = Image.open(image)
+		try:
+			info = im._getexif()
+			for tag, value in info.items():
+				decoded = TAGS.get(tag, value)
+				ret[decoded] = value
+			if ret['Orientation'] == 6:
+				rotation = 90
+		except:
+			rotation = 0
+
+		user_img = QImage(image)
+
+		if rotation == 90:
+			rot = QTransform()
+			rot = rot.rotate(90)
+			user_img = user_img.transformed(rot)
 
 
-		'''img = QImage(filepath);
-		if img.height() > img.width():
-			result = img.scaledToWidth(96,Qt.SmoothTransformation);
-			result = result.copy(0,result.height()/2-32,96,96);
-		elif img.height() < img.width():
-			result = img.scaledToHeight(96,Qt.SmoothTransformation);
-			result = result.copy(result.width()/2-32,0,96,96);
-		elif img.height() > 96:
-			result = img.scaled(96, 96, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation);
-			result = result.copy(0,0,96,96);
+		if user_img.height() > user_img.width():
+			preimg = user_img.scaledToWidth(480, Qt.SmoothTransformation)
+			preimg = preimg.copy( 0, preimg.height()/2-240, 480, 480); 
+		elif user_img.height() < user_img.width():
+			preimg = user_img.scaledToHeight(480, Qt.SmoothTransformation)
+			preimg = preimg.copy( preimg.width()/2-240, 0, 480, 480); 
 		else:
-			result = img;
+			preimg = user_img.scaled(480, 480, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
 
-		result.save( "/home/user/.cache/wazapp/tempimg.jpg", "JPG" );'''
+		preimg.save("/home/user/.cache/wazapp/temp.jpg", "JPG")
 
-		#if rotation == 90:
-		#	im = Image.open("/home/user/.cache/wazapp/tempimg.jpg")
-		#	im = im.rotate(90)
-		#	im.save("/home/user/.cache/wazapp/tempimg.jpg", "JPEG", quality=85)
-
+		preview = preimg.scaled(64, 64, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+		preview.save("/home/user/.cache/wazapp/temp2.jpg", "JPG")
 
 		self.stanzaReader.currentPictureJid = jid;
-		f = open(filepath, 'r')
-		#f = open("/home/user/.cache/wazapp/tempimg.jpg", 'r')
+
+		f = open("/home/user/.cache/wazapp/temp.jpg", 'r')
 		stream = f.read()
 		stream = bytearray(stream)
 		f.close()
-		#print stream
+
+		f = open("/home/user/.cache/wazapp/temp2.jpg", 'r')
+		stream2 = f.read()
+		stream2 = bytearray(stream2)
+		f.close()
+
 		idx = self.makeId("set_picture_")
 		self.stanzaReader.requests[idx] = self.stanzaReader.handleSetPicture
 		
 		listNode = ProtocolTreeNode("picture",{"xmlns":"w:profile:picture","type":"image"}, None, stream)
-		#prevNode = ProtocolTreeNode("picture",{"type":"preview"}, None, bytearray(stream))
-		iqNode = ProtocolTreeNode("iq",{"id":idx,"to":jid,"type":"set"},[listNode, listNode])
+		#prevNode = ProtocolTreeNode("picture",{"type":"preview"}, None, stream2)
+		iqNode = ProtocolTreeNode("iq",{"id":idx,"to":jid,"type":"set"},[listNode])
 		
 		self.out.write(iqNode)
 

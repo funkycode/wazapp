@@ -50,6 +50,7 @@ WAStackWindow {
 		theme.inverted = MySettings.getSetting("ThemeColor", "White")=="Black"
 		mainBubbleColor = parseInt(MySettings.getSetting("BubbleColor", "1"))
 		sendWithEnterKey = MySettings.getSetting("SendWithEnterKey", "Yes")=="Yes"
+		resizeImages = MySettings.getSetting("ResizeImages", "No")=="Yes"
 	}
 
     property string waversiontype:waversion.split('.').length == 4?'developer':'beta'
@@ -59,9 +60,11 @@ WAStackWindow {
 	property bool dialogOpened: false
     property int mainBubbleColor
 	property bool sendWithEnterKey
+	property bool resizeImages
 	property string selectedPicture
 	property string selectedContactName: ""
 	property string selectedGroupPicture
+	property string bigProfileImage
 
     /****** Signal and Slot definitions *******/
 
@@ -104,7 +107,7 @@ WAStackWindow {
 	signal onPictureUpdated(string ujid);
 	signal setPicture(string jid, string file);
 	signal sendMediaMessage(string jid, string data, string image, string preview);
-	signal sendMediaImageFile(string jid, string file, string preview);
+	signal sendMediaImageFile(string jid, string file);
 	signal sendMediaVideoFile(string jid, string file);
 	signal sendMediaAudioFile(string jid, string file);
 	signal sendLocation(string jid, string latitude, string longitude, string rotate);
@@ -112,6 +115,9 @@ WAStackWindow {
 	signal removeSingleContact(string jid);
 
 	signal setBlockedContacts(string contacts);
+	signal setResizeImages(bool resize);
+
+	signal onMediaTransferProgressUpdated(int progress, string cjid, int message_id)
 
 	signal selectedMedia(string url);
 	property string currentJid: ""
@@ -273,6 +279,9 @@ WAStackWindow {
 
 		blockedContacts = MySettings.getSetting("BlockedContacts", "")
 		setBlockedContacts(blockedContacts)
+
+		resizeImages = MySettings.getSetting("ResizeImages", "Yes")=="Yes" ? true : false
+		setResizeImages(resizeImages)
 	}
 
 	function getPictures() {
@@ -476,13 +485,13 @@ WAStackWindow {
             conversation.mediaTransferError(message_id,mediaObject);
     }
 
-    function onMediaTransferProgressUpdated(progress,jid,message_id){
-        consoleDebug("UPDATED PROGRESS "+progress + " for " + jid)
+    /*function onMediaTransferProgressUpdated(progress,jid,message_id){
+        consoleDebug("UPDATED PROGRESS "+progress + " for " + jid + " - message id: " + message_id)
         var conversation = waChats.getConversation(jid);
 
         if(conversation)
             conversation.mediaTransferProgressUpdated(progress,message_id);
-    }
+    }*/
         /************/
 
 
@@ -538,14 +547,16 @@ WAStackWindow {
 		id: galleryModel
 		rootType: DocumentGallery.Image
 		properties: [ "url", "fileName" ]
-		sortProperties: [ "fileName" ] 
+		sortProperties: [ "-dateTaken" ] 
+		autoUpdate: true
 	}
 
 	DocumentGalleryModel {
 		id: galleryVideoModel
 		rootType: DocumentGallery.Video
 		properties: [ "url", "fileName" ]
-		sortProperties: [ "fileName" ] 
+		sortProperties: [ "-lastModified" ] 
+		autoUpdate: true
 	}
 
 	DocumentGalleryModel {
@@ -553,6 +564,7 @@ WAStackWindow {
 		rootType: DocumentGallery.Album
 		properties: ["artist", "title"]
 		sortProperties: ["artist", "title"]
+		autoUpdate: true
 	}
 
 
@@ -562,6 +574,7 @@ WAStackWindow {
         rootType: DocumentGallery.Audio
         properties: ["url", "fileName", "title", "artist", "duration"]
         sortProperties: ["+title"]
+		autoUpdate: true
 		filter: GalleryFilterIntersection {
             filters: [
                 GalleryEqualsFilter {

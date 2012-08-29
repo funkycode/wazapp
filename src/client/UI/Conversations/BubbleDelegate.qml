@@ -106,7 +106,7 @@ Item {
            progress:delegateContainer.progress
            name: delegateContainer.name
            state_status:delegateContainer.state_status
-           media: delegateContainer.media//.preview?delegateContainer.media.preview:""
+           media: delegateContainer.media //.preview?delegateContainer.media.preview:""
            message: delegateContainer.message
            bubbleColor:delegateContainer.bubbleColor;
 

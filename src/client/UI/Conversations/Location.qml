@@ -180,36 +180,38 @@ WAPage {
     }
 
     Column {
-        anchors { bottom: parent.bottom; bottomMargin: 16; left: parent.left; leftMargin: 12 }
-        spacing: 12
+        anchors { bottom: parent.bottom; bottomMargin: 16; left: parent.left; leftMargin: 16; right: parent.right; rightMargin: 16 }
+        spacing: 8
 
         Rectangle {
             id: longRect
-            color: "transparent"
+            color: "gray"
+	    opacity: 0.75
             height: 36
-            width: parent.width -32
-
+            width: parent.width
+	    radius: height/2
             Label {
                 id: longLabel
-                anchors { fill: parent; margins: 5 }
-                font { family: "Nokia Pure Text"; weight: Font.Light; pixelSize: 24 }
+                anchors { left: parent.left; leftMargin: 8; right: parent.right; rightMargin: 8; bottom: parent.bottom; bottomMargin: 4; top: parent.top; topMargin: 4 }
+                font { family: "Nokia Pure Text"; weight: Font.Light; pixelSize: 22 }
 
-                text: qsTr("Logitude:") + " " + longitudeStr + "."
+                text: qsTr("Longitude:") + " " + longitudeStr //+ "."
             }
         }
 
         Rectangle {
             id: latRect
-            color: "transparent"
+            color: "gray"
+	    opacity: 0.75
             height: 36
-            width: 330
-
+            width: parent.width
+	    radius: height/2
             Label {
                 id: latLabel
-                anchors { fill: parent; margins: 5 }
-                font { family: "Nokia Pure Text"; weight: Font.Light; pixelSize: 24 }
+                anchors { left: parent.left; leftMargin: 8; right: parent.right; rightMargin: 8; bottom: parent.bottom; bottomMargin: 4; top: parent.top; topMargin: 4 }
+                font { family: "Nokia Pure Text"; weight: Font.Light; pixelSize: 22 }
 
-                text: qsTr("Latitude:") + " " + latitudeStr + "."
+                text: qsTr("Latitude:") + " " + latitudeStr //+ "."
             }
         }
     }

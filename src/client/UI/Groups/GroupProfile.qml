@@ -229,7 +229,9 @@ WAPage {
 					imgsource: groupPicture
 					onClicked: { 
 						if (bigImage.height>0) 
-							Qt.openUrlExternally(groupPicture.replace(".png",".jpg").replace("contacts","profile"))
+							bigProfileImage = groupPicture.replace(".png",".jpg").replace("contacts","profile")
+							pageStack.push (Qt.resolvedUrl("../common/BigProfileImage.qml"))
+							//Qt.openUrlExternally(groupPicture.replace(".png",".jpg").replace("contacts","profile"))
 					}
 				}
 

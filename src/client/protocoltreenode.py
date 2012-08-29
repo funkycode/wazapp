@@ -344,8 +344,8 @@ class BinTreeNodeWriter():
 		
 		self.realOut.write(87);
 		self.realOut.write(65);
-		self.realOut.write(1);
 		self.realOut.write(0);
+		self.realOut.write(4);
 		
 		#self.out.write(0); ##HACK FOR WHAT BUFFER FLUSH SENDS IN JAVA
 		#self.out.write(26); ##HACK FOR WHAT BUFFER FLUSH SENDS IN JAVA

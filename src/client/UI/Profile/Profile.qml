@@ -109,7 +109,9 @@ WAPage {
 				imgsource: contactPicture=="none" ? "../common/images/user.png" : contactPicture
 				onClicked: { 
 					if (bigImage.height>0) 
-						Qt.openUrlExternally(contactPicture.replace(".png",".jpg").replace("contacts","profile"))
+						bigProfileImage = contactPicture.replace(".png",".jpg").replace("contacts","profile")
+						pageStack.push (Qt.resolvedUrl("../common/BigProfileImage.qml"))
+						//Qt.openUrlExternally(contactPicture.replace(".png",".jpg").replace("contacts","profile"))
 				}
 			}
 

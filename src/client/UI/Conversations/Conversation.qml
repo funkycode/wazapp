@@ -103,6 +103,13 @@ WAPage {
 				sendMediaMessage(jid, url)
 		}
 
+		onOnMediaTransferProgressUpdated: {
+			if (jid = cjid) {
+				var bubble = getBubble(message_id);
+				if (bubble) bubble.progress = progress
+			}
+		}
+
 	}
 
 	function setPositionToAdd(value) {
@@ -269,12 +276,12 @@ WAPage {
         return 0;
     }
 
-    function mediaTransferProgressUpdated(progress,message_id){
+    /*function mediaTransferProgressUpdated(progress,message_id){
         var bubble = getBubble(message_id);
         if(bubble){
             bubble.progress = progress
         }
-    }
+    }*/
 
     function mediaTransferSuccess(message_id,mediaObject){
         var bubble = getBubble(message_id);
@@ -344,12 +351,11 @@ WAPage {
         height: appWindow.inPortrait ? 73 : (showSendButton ? 0 : 73)
 		clip: true
 		
-        Rectangle {
+        Item {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width - 32
             anchors.left: parent.left
             anchors.leftMargin: 16
-			color: "transparent"
 			height: 50
 
 			BorderImage {
@@ -370,6 +376,7 @@ WAPage {
 					anchors.fill: parent
 					onClicked: { 
                         //chatsTabButton.clicked()
+						if(mediaContentSlip.width>48) mediaContentSlipOff.start();
 						appWindow.pageStack.pop(1)
 						if (conv_data.count==0 && !isGroup()) {
 							// EMPTY CONVERSATION. REMOVING
@@ -864,7 +871,7 @@ WAPage {
             onClicked: {
                 //var component = Qt.createComponent("Emojidialog.qml");
                 //var sprite = component.createObject(conversation_view, {});
-
+				if(mediaContentSlip.width>48) mediaContentSlipOff.start();
                 emojiDialog.openDialog();
 		    }
 		}
@@ -872,7 +879,7 @@ WAPage {
 		Rectangle {
 			id: mediaContentSlip
 			width: 48
-			radius: 20
+			radius: media_button.width/2
 			height: 48
 			color: "gray"
 			anchors.left: emoji_button.right
@@ -919,8 +926,8 @@ WAPage {
 	    		anchors.rightMargin: 10
 	    		anchors.verticalCenter: parent.verticalCenter
 	    		onClicked: {
-					pageStack.push(sendPicture)
 					mediaContentSlipOff.start();
+					pageStack.push(sendPicture)
 				}		
 			}	
 			Button {
@@ -933,8 +940,8 @@ WAPage {
 	    		anchors.rightMargin: 10
 	    		anchors.verticalCenter: parent.verticalCenter
 	    		onClicked: {
-					pageStack.push(sendVideo)
 					mediaContentSlipOff.start();
+					pageStack.push(sendVideo)
 				}
 			}
 
@@ -948,8 +955,8 @@ WAPage {
 	    		anchors.rightMargin: 10
 	    		anchors.verticalCenter: parent.verticalCenter
 				onClicked: {
-					pageStack.push(sendAudio)
 					mediaContentSlipOff.start();
+					pageStack.push(sendAudio)
 				}
 			}
 
@@ -962,7 +969,10 @@ WAPage {
 	    		anchors.right: vcard_button.left
 	    		anchors.rightMargin: 10
 	    		anchors.verticalCenter: parent.verticalCenter
-				onClicked: pageStack.push (Qt.resolvedUrl("Location.qml"))
+				onClicked: {
+					mediaContentSlipOff.start();
+					pageStack.push (Qt.resolvedUrl("Location.qml"))
+				}
 			}
 
 			Button {
@@ -975,16 +985,14 @@ WAPage {
 	    		anchors.rightMargin: 6
 	    		anchors.verticalCenter: parent.verticalCenter
 				onClicked: {
+					mediaContentSlipOff.start();
 					selectedContactName = ""
-		            pageStack.push (Qt.resolvedUrl("../Contacts/ShareContact.qml"))
-					if (mediaContentSlip.width > 48) mediaContentSlipOff.start();
+            		pageStack.push (Qt.resolvedUrl("../Contacts/ShareContact.qml"))
 				}
 			}
 
 
 		}
-
-
 
 		Button
 		{

@@ -111,8 +111,7 @@ WAPage {
 					//selectedPicture = url //"/home/user/.thumbnails/grid/" + Qt.md5(url) + ".jpeg" //url
 					//pageStack.replace(Qt.resolvedUrl("SetPicture.qml"))
 
-	                setPicture(profileUser, decodeURIComponent("/home/user/.thumbnails/grid/" + Qt.md5(url) + ".jpeg"))
-					//sendMediaFile(decodeURIComponent(url), fileName)
+	                setPicture(profileUser, decodeURIComponent(url))
 					pageStack.pop()
 	            }
 	        }

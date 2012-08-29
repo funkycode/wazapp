@@ -86,7 +86,7 @@ SpeechBubble {
         color:"transparent"
 		anchors.left: parent.left
 		anchors.leftMargin: from_me==1 ? 0 : (appWindow.inPortrait?480:854) -(openButton.visible?openButton.paintedWidth:180) - 86
-       // height:parent.height
+       	//height:parent.height
         state:(mediaBubble.progress > 0 && mediaBubble.progress < 100)?"inprogress": mediaBubble.transferState
 		
         states: [
@@ -176,7 +176,7 @@ SpeechBubble {
 
             width: openButton.visible? openButton.paintedWidth : 180
             height: openButton.visible? openButton.height : 32
-           // anchors.verticalCenter: msg_image.verticalCenter
+           	//anchors.verticalCenter: msg_image.verticalCenter
 			anchors.left: from_me==1 ? parent.left : this.left
 			anchors.right: from_me? this.right : parent.right
 			anchors.leftMargin: from_me==1? 84 : 0
@@ -201,10 +201,14 @@ SpeechBubble {
 				horizontalAlignment: from_me==1? Text.AlignLeft : Text.AlignRight
             }
 
-            Button {
-                id: operationButton
+            SheetButton {
+				id: operationButton
+				platformStyle: SheetButtonStyle {
+					textColor: from_me==1 ? "black" : "white"
+					disabledTextColor: from_me==1 ? "gray" : "lightgray"
+					background: "image://theme/meegotouch-sheet-button-background-selected"
+				}
                 visible:state!="success"
-
                 width: parent.width
                 height: 38
                 font.pixelSize: 20

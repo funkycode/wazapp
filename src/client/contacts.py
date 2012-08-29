@@ -256,10 +256,11 @@ class WAContacts(QObject):
 
 		for c in phoneContacts:
 			if name == c.displayLabel():
+				if os.path.isfile("/home/user/.cache/wazapp/contacts/" + name + ".vcf"):
+					os.remove("/home/user/.cache/wazapp/contacts/" + name + ".vcf")
 				print "founded contact: " + c.displayLabel()
 				contacts.append(c)
-				fileName = "/home/user/.cache/wazapp/vcards/" + name + ".vcf"
-				openfile = QFile("/home/user/.cache/wazapp/vcards/" + name + ".vcf")
+				openfile = QFile("/home/user/MyDocs/Wazapp/media/contacts/" + name + ".vcf")
 				openfile.open(QIODevice.WriteOnly)
 				if openfile.isWritable():
 					exporter = QVersitContactExporter()

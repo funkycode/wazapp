@@ -108,7 +108,7 @@ WAPage {
 	            id: mouseArea
 	            anchors.fill: parent
 	            onClicked: {
-	                selectedGroupPicture = "/home/user/.thumbnails/grid/" + Qt.md5(url) + ".jpeg"
+	                selectedGroupPicture = decodeURIComponent(url)
 					pageStack.pop()
 	            }
 	        }

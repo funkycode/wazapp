@@ -256,6 +256,18 @@ WAPage {
 				}
 			}
 
+			GroupSeparator {
+				title: qsTr("Media sending")
+			}
+			SwitchItem {
+				title: qsTr("Resize images before sending")
+				check: resizeImages
+				onCheckChanged: {
+					MySettings.setSetting("ResizeImages", value)
+					resizeImages = value=="Yes"
+					setResizeImages(resizeImages)
+				}
+			}
 
 		}
 

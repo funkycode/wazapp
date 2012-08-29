@@ -317,6 +317,7 @@ class WAUI(QDeclarativeView):
 		self.c.contactExported.connect(whatsapp.eventHandler.sendVCard)
 
 		self.rootObject().setBlockedContacts.connect(whatsapp.eventHandler.setBlockedContacts)
+		self.rootObject().setResizeImages.connect(whatsapp.eventHandler.setResizeImages)
 
 		#self.reg = Registration();
 		self.whatsapp = whatsapp;

@@ -46,7 +46,6 @@ WAPage {
     }
 
 	Component.onCompleted: {
-		console.log("SELECT DIALOG OPENED")
 		galleryModel.filter = myFilters
 	}
 
@@ -113,7 +112,7 @@ WAPage {
 	            id: mouseArea
 	            anchors.fill: parent
 	            onClicked: {
-					sendMediaImageFile(currentJid, decodeURIComponent(url), "/home/user/.thumbnails/grid/" + Qt.md5(url) + ".jpeg")
+					sendMediaImageFile(currentJid, decodeURIComponent(url))
 					pageStack.pop()
 	            }
 	        }

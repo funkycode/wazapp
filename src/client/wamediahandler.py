@@ -36,7 +36,7 @@ class WAMediaHandler(QObject):
 	error = QtCore.Signal(str,int)
 	success = QtCore.Signal(str,int,str,str)
 	
-	def __init__(self,jid,message_id,url,mediaType_id):
+	def __init__(self,jid,message_id,url,mediaType_id,account,resize=False):
 		
 		WADebug.attach(self);
 		path = self.getSavePath(mediaType_id);
@@ -49,14 +49,14 @@ class WAMediaHandler(QObject):
 		if not os.path.exists(path):
 			os.makedirs(path)
 		
-		self.httpHandler = WAHTTPHandler(url,path+"/"+filename)
+		self.httpHandler = WAHTTPHandler(jid,account,resize,url,path+"/"+filename)
 		self.httpHandler.progressUpdated.connect(self.onProgressUpdated)
 		self.httpHandler.success.connect(self.onSuccess)
 		self.httpHandler.error.connect(self.onError)
 		
 		self.message_id = message_id
 		self.jid = jid
-		
+
 		super(WAMediaHandler,self).__init__();
 	
 	
@@ -122,10 +122,13 @@ class WAHTTPHandler(QThread):
 	success = QtCore.Signal(str,str);
 	progressUpdated = QtCore.Signal(int)
 	
-	def __init__(self,url,savePath,action="pull"):
+	def __init__(self,jid,account,resize,url,savePath,action="pull"):
 		self.url = url
 		self.savePath = savePath
+		self.jid = jid
+		self.account = account
 		self.action = "push" if action =="push" else "pull"
+		self.resizeImages = resize
 		super(WAHTTPHandler,self).__init__();
 		
 		
@@ -140,6 +143,19 @@ class WAHTTPHandler(QThread):
 	def push(self,image):
 		image = image.replace("file://","")
 
+		if self.resizeImages is True:
+			user_img = QImage(image)
+			preimg = user_img
+			if user_img.height() > user_img.width() and user_img.width() > 600:
+				preimg = user_img.scaledToWidth(600, Qt.SmoothTransformation)
+			elif user_img.height() < user_img.width() and user_img.height() > 800:
+				preimg = user_img.scaledToHeight(800, Qt.SmoothTransformation)
+			elif user_img.height() > 600:
+				preimg = user_img.scaled(600, 600, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+			preimg.save("/home/user/.cache/wazapp/" + os.path.basename(image))
+			image = "/home/user/.cache/wazapp/" + os.path.basename(image)
+
+
 		self.sock = MySocketConnection();
 		HOST, PORT = 'mms.whatsapp.net', 443
 		self.sock.connect((HOST, PORT));
@@ -149,30 +165,29 @@ class WAHTTPHandler(QThread):
 		filetype = mimetypes.guess_type(filename)[0]
 		filesize = os.path.getsize(image)
 
-		print "Uploading " + filename + " - type: " + filetype;
+		print "Uploading " + image + " - type: " + filetype + " - resize:" + str(self.resizeImages);
 
 		m = hashlib.md5()
 		m.update(filename)
-		crypto = m.hexdigest()
+		crypto = m.hexdigest() + os.path.splitext(filename)[1]
 
 		boundary = "-------" + m.hexdigest() #"zzXXzzYYzzXXzzQQ"
 		contentLength = 0
 		
 		hBAOS = bytearray()
-		hBAOS += "--"
-		hBAOS += boundary
-		hBAOS += "\r\n"
-		hBAOS += "Content-Disposition: form-data; name=\""
-		hBAOS += "file"
-		hBAOS += "\"; filename=\""
-		hBAOS += filename.encode()
-		hBAOS += "\"\r\n"
+		hBAOS += "--" + boundary + "\r\n"
+		hBAOS += "Content-Disposition: form-data; name=\"to\"\r\n\r\n"
+		hBAOS += self.jid + "\r\n"
+		hBAOS += "--" + boundary + "\r\n"
+		hBAOS += "Content-Disposition: form-data; name=\"from\"\r\n\r\n"
+		hBAOS += self.account.replace("@whatsapp.net","").encode() + "\r\n"
+
+		hBAOS += "--" + boundary + "\r\n"
+		hBAOS += "Content-Disposition: form-data; name=\"file\"; filename=\"" + crypto.encode() + "\"\r\n"
 		hBAOS += "Content-Type: " + filetype + "\r\n\r\n"
 
 		fBAOS = bytearray()
-		fBAOS += "\r\n--"
-		fBAOS += boundary
-		fBAOS += "--\r\n"
+		fBAOS += "\r\n--" + boundary + "--\r\n"
 		
 		contentLength += len(hBAOS)
 		contentLength += len(fBAOS)
@@ -184,9 +199,11 @@ class WAHTTPHandler(QThread):
 		POST += "POST https://mms.whatsapp.net/client/iphone/upload.php HTTP/1.1\r\n"
 		POST += "Content-Type: multipart/form-data; boundary=" + boundary + "\r\n"
 		POST += "Host: mms.whatsapp.net\r\n"
+		POST += "User-Agent: WhatsApp/2.8.13 S60Version/5.3 Device/C7-00\r\n"
 		POST += "Content-Length: " + str(contentLength) + "\r\n\r\n"
 
 		print "sending REQUEST "
+		print hBAOS
 		ssl_sock.write(str(POST))
 		ssl_sock.write(str(hBAOS))
 
@@ -202,7 +219,7 @@ class WAHTTPHandler(QThread):
 			#print "sending " + str(totalsent) + " to " + str(totalsent+buf) + " - real: " + str(len(stream[:buf]))
 			ssl_sock.write(str(stream[:buf]))
 			status = totalsent * 100 / filesize
-			if lastEmit!=status and status!=100:
+			if lastEmit!=status and status!=100 and filesize>12288:
 				self.progressUpdated.emit(status)
 			lastEmit = status
 			stream = stream[buf:]
@@ -210,7 +227,10 @@ class WAHTTPHandler(QThread):
 
 		ssl_sock.write(str(fBAOS))
 
-		sleep(2)
+		if self.resizeImages is True:
+			os.remove("/home/user/.cache/wazapp/" + os.path.basename(image))
+
+		sleep(1)
 		print "Done!"
 		print "Reading response..."
 		data = ssl_sock.recv(8192)

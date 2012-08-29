@@ -115,8 +115,10 @@ WAPage {
 					width: size
 					imgsource: contactPicture=="none" ? "../common/images/user.png" : contactPicture
 					onClicked: { 
-						if (bigImage.height>0) 
-							Qt.openUrlExternally(contactPicture.replace(".png",".jpg").replace("contacts","profile"))
+						if (bigImage.height>0)
+							bigProfileImage = contactPicture.replace(".png",".jpg").replace("contacts","profile")
+							pageStack.push (Qt.resolvedUrl("../common/BigProfileImage.qml"))
+							//Qt.openUrlExternally(contactPicture.replace(".png",".jpg").replace("contacts","profile"))
 					}
 				}
 
@@ -232,7 +234,7 @@ WAPage {
 			Button {
 				height: 50
 				width: parent.width
-				font.pixelSize: 20
+				font.pixelSize: 22
 				text: qsTr("Add to contacts")
 				visible: contactName==qsTr("Unknown contact")
 		        onClicked: Qt.openUrlExternally("tel:"+contactNumber)
