@@ -290,7 +290,7 @@ class WAContacts(QObject):
 
 			if founded is False and wc.number is not None:
 				self.checkPicture(jname,"")
-				c['name'] = wc.pushname.encode("utf8") if wc.pushname is not None else ""
+				c['name'] = wc.pushname.decode("utf8") if wc.pushname is not None else ""
 				#print "ADDING CONTACT NOT FOUNDED: " + wc.number[-10:] + " - " + c['name']
 				c['picture'] = "/home/user/.cache/wazapp/contacts/" + jname + ".png";
 				wc.setRealTimeDataPush(c['name'],c['picture']);
